@@ -1,3 +1,10 @@
+# IntelliJ project
+*.iws
+.idea/
+
+# Visual Studio Code project
+.vscode/
+
 # Logs
 logs
 *.log
