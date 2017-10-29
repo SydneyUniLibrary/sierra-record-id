@@ -67,6 +67,42 @@ Notes:
 
 
 
+## Detecting the form
+
+`sierra-record-id` detects the form of the record id as follows (in order, after trimming whitespace):
+
+1. If the form starts with `.`, then it is a record key and `sierra-record-id` goes on to determine if it is strong or weak.
+2. If the form starts with `https://` and contains `/v4/`, then it is an absolute v4 API URL.
+3. If the form starts with `v4/`, then it is a relative v4 API URL.
+4. If the form starts with a letter, then it is a record key and `sierra-record-id` goes on to determine if it is strong or weak.
+5. If the form is a string 12 or more digits, then it is a database id.
+6. If the from starts with a digit, then it is a record number.
+7. Otherwise the form is unknown.
+
+You can detect a database id without having to set up `sierra-db-as-promised`.
+You can also detect an API URL without having to set up `SIERRA_API_HOST`.
+
+Take heed that detecting is not validation. If you give `sierra-record-id` a string that is not a valid record id,
+it could incorrectly detect it.  
+
+### Detecting if a record key is strong or weak
+
+`sierra-record-id` detects if a record key is strong or weak as follows:
+
+1. `sierra-record-id` strips that off any virtual record part (like `@abcde`), any period prefix, and the record type character.
+2. If what's left ends in `x`, then the record key is strong.
+3. If what's left is a string of 8 digits, then the record key is strong.
+4. If what's left is a string of 6 digits, then the record key is weak.
+5. If the final digit is a valid checksum for the proceeding digits, then the record key is strong.
+6. Otherwise the record key is weak.
+
+Because record numbers can be 6 or 7 digits, `i3696836` is ambiguous. It could be a weak record key for the 7 digit record number `3696836`,
+or it could be a strong key for the 6 digit record number `369683` with `6` being the check digit.
+`sierra-record-id` presumes in this situation, that if the last digit is a valid check digit then it is a strong key for a 6 digit record number.
+
+
+
+
 ## License
 
 Copyright (c) 2017  The University of Sydney Library
