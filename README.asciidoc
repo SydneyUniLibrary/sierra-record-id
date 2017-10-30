@@ -11,7 +11,7 @@ endif::[]
 
 = sierra-record-id
 
-Translates between the various forms of identifying a record in Sierra.
+Converts between the various forms of identifying a record in Sierra.
 
 toc::[]
 
@@ -26,14 +26,14 @@ npm install 'SydneyUniLibrary/sierra-record-id#v1.0'
 
 === How to set up for virtual records
 
-If you need to translate to or from database ids for virtual records, you will need to set up access to the Sierra
+If you need to converting to or from database ids for virtual records, you will need to set up access to the Sierra
 database. Follow the instruction on https://github.com/SydneyUniLibrary/sierra-db-as-promised#how-to-use[how to use sierra-db-as-promised].
 If you don't do this, then `sierra-record-id` will throw an error if you try to translate to or from the database id
 for a virtual record.
 
 === How to set up for Sierra API URLs
 
-If you need to translate to or from API URLs you will need to configure Sierra's host name. You do this in a way that is
+If you need to convert to absolute API URLs you will need to configure Sierra's host name. You do this in a way that is
 compatible with https://github.com/SydneyUniLibrary/sierra-api-as-promised[sierra-api-as-promised].
 In other words, if you have already set up `sierra-api-as-promised` you are already set up for using Sierra API URIs
 with `sierra-record-id`.
@@ -52,7 +52,7 @@ SIERRA_API_HOST=sierra.library.edu
 
 
 
-== Forms of record id
+== Forms of identifying a record
 
 `sierra-record-id` uses the following terminology/nomenclature to refer to the different forms of identifying a record
 in Sierra.
@@ -61,46 +61,297 @@ More details are on https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Fo
 
 [options="header"]
 |===
-| Form of record id   | Example            | Virtual record example
-| Record number       | `3696836`          | `587634@abcde`
-| Weak record key     | `i3696836`         | `i587634@abcde`
-| Strong record key   | `i36968365`        | `i5876345@abcde`
-| Database id         | `450975262916`     | `28192594886437`
-| Relative v4 API URL | `v4/items/3696836` | `v4/items/587634@abcde`
+| Term                | `RecordIdForms`       | Example            | Virtual record example
+| Record number       | `RECORD_NUMBER`       | `3696836`          | `587634@abcde`
+| Weak record key     | `WEAK_RECORD_KEY`     | `i3696836`         | `i587634@abcde`
+| Strong record key   | `STRONG_RECORD_KEY`   | `i36968365`        | `i5876345@abcde`
+| Database id         | `DATABASE_ID`         | `450975262916`     | `28192594886437`
+| Relative v4 API URL | `RELATIVE_V4_API_URL` | `v4/items/3696836` | `v4/items/587634@abcde`
 | Absolute v4 API URL
+| `ABSOLUTE_V4_API_URL`
 | `https://sierra.library.edu/iii/sierra-api/v4/items/3696836`
 | `https://sierra.library.edu/iii/sierra-api/v4/items/587634@abcde`
 |===
 
+There is an additional `RecordIdForms` not mention in the table above, which is `AMBIGUOUS_RECORD_KEY`.
+`detect` returns it cannot determine if a record key is weak or strong.
+
+
+
+
+== convert
+
+CAUTION: You cannot use `convert` when converting to or from a database id for a virtual record.
+         You must use `convertAsync` in this situation because of the potential database access.
+         If you try to use `convert`, it will throw an error.
+
+=== Synopsis
+
+[source,js]
+----
+convert({
+    id: Number | String,
+    to: a symbol in RecordIdForms,
+    from: a symbol in RecordIdForms = undefined,
+    recordType: String = undefined,
+    initialPeriod: Boolean = false,
+    strongKeysForVirtualRecords: Boolean = false,
+}) => String
+----
+
+=== Examples
+
+TIP: Any combination of from and to is possible, not just the ones demonstrated here.
+
+[source,js]
+----
+const { convert, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+
+convert({ id: 558315, to: RecordIdForms.WEAK_RECORD_KEY, recordType: 'o' })
+// => 'o558315'
+
+convert({ id: '558315', to: RecordIdForms.WEAK_RECORD_KEY, recordType: 'o' })
+// => 'o558315'
+
+convert({ id: '558315', to: RecordIdForms.WEAK_RECORD_KEY, recordType: 'o', initialPeriod: true })
+// => '.o558315'
+
+convert({ id: 'o558315', to: RecordIdForms.RECORD_NUMBER })
+// => '558315'
+
+convert({ id: 'o558315', to: RecordIdForms.STRONG_RECORD_KEY })
+// => 'o5583159'
+
+convert({ id: '.o558315', to: RecordIdForms.STRONG_RECORD_KEY })
+// => 'o5583159'
+
+convert({ id: 'o558315', to: RecordIdForms.STRONG_RECORD_KEY, initialPeriod: true })
+// => '.o5583159'
+
+convert({ id: 'o558315', to: RecordIdForms.DATABASE_ID })
+// => '476741928171'
+
+convert({ id: '476741928171', to: RecordIdForms.RELATIVE_V4_API_URL })
+// => 'v4/orders/558315'
+
+convert({ id: '476741928171', to: RecordIdForms.ABSOLUTE_V4_API_URL })
+// => 'https://sierra.library.usyd.edu.au/iii/sierra-api/v4/orders/558315'
+----
+
+==== Converting from ambiguous record keys
+
+CAUTION: Records that have 7 digits are ambiguous. So you have to give the `from` parameter to specify if you are
+         converting from a strong record key or a weak record key.
+
+[source,js]
+----
+const { convert, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+
+convert({ id: 'b3384639', from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
+// => '420910179640'  Because record num is 3384632
+
+convert({ id: 'b3384639', from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
+// => '420907133471'  Becasue record num is 338463 and 9 is check digit.
+
+convert({ id: 'b3384639', to: RecordIdForms.DATABASE_ID })
+// => throws an error
+----
+
+==== Unusual behaviour when converting virtual records id to strong record keys
+
+[source,js]
+----
+convert({ id: 'i100993', to: RecordIdForms.STRONG_RECORD_KEY)
+// => 'i100993x' A strong record key, as expected.
+
+convert({ id: 'i100993@fhill', to: RecordIdForms.STRONG_RECORD_KEY)
+// => 'i100993@fhill' !!!! A weak record key, even though we asked for a strong record key !!!!
+
+convert({ id: 'i100993@fhill', to: RecordIdForms.STRONG_RECORD_KEY, strongKeysForVirtualRecords: true)
+// => 'i100993x@fhill' Only now it is strong.
+----
+
+While this is unusual behaviour, `convert` is doing the right thing(TM).
+See the `strongKeysForVirtualRecords` parameter for an explanation.
+
+=== Parameters
+
+CAUTION: You cannot give `RecordIdForms.AMBIGUOUS_RECORD_KEY` as either the `from` or `to` options.
+         You must specify if the key is strong or weak.
+
+CAUTION: If you give a `from` parameter but then give `convert` a record id of a different form, the result of `convert`
+         is not defined.
+
+TIP: If you know what you are converting from, specify it in the `from` parameter. `convert` will then not have to call
+     `detect` on the id you give it.
+
+[options="header"]
+|===
+| Parameter | Required | Description
+
+| id
+| Yes
+| A Number or a String that has the record id you want to convert.
+
+| to
+| Yes
+| Specify what is the form of the record id you want to convert to. Use one of the `RecordIdForms` symbols.
+
+| from
+| No
+| Specify what is the form of the record id you already have. Use one of the `RecordIdForms` symbols.
+  If you don't give the `from` parameter, `convert` will use `detect` to try to determine the form of the id you gave it.
+
+| recordType
+| Sometimes
+| Only applicable when converting from (but not to) a record number, and in which case it is required.
+  Specify the record type character of the record whose id you are converting. Give `a` for authority, `i` for item,
+  `n` for invoice, and so on.
+
+| initialPeriod
+| No
+| Defaults to `false`. Only applicable when converting to (but not from) a weak or strong record key.
+  If `true` then the record key `convert` returns will start with an initial period. If `false` it won't.
+
+| strongKeysForVirtualRecords
+| No
+| Defaults to `false`. Only applicable when converting to (but not from) a strong record keys for a virtual record.
+  Sierra's own behaviour is to produce weak record keys for virtual records, even in situations where it
+  would have produced a strong record key if the record was non-virtual. By default, `convert` will follows this behaviour.
+  That is if you don't give the `strongKeysForVirtualRecords` parameter or you give `false` for it, `convert` will
+  produce a weak record key for virtual records even if you give `RecordIdForms.STRONG_RECORD_KEY` for the `to` parameter.
+  If you really do want strong record keys for virtual records, you need to give `true` for `strongKeysForVirtualRecords`
+  in addition to giving `RecordIdForms.STRONG_RECORD_KEY` for the `to` parameter.
+
+|===
+
+=== Errors
+
+`convert` will throw an error (in at least) the following situations.
+
+* You did not give the `from` parameter and `detect` returned `RecordIdForms.AMBIGUOUS_RECORD_KEY` or `undefined`
+  for the id you are trying to convert.
+
+* You gave `RecordIdForms.AMBIGUOUS_RECORD_KEY` as either the `from` or `to` parameters.
+
+* You are converting from a record number, but you haven't given the `recordType` parameter.
+
+* You are converting to an absolute v4 api url but you have not set up for Sierra API URLs.
+
+* You are converting to or from a database id for a virtual record.
+
+
+
+
+== convertAsync
+
+TIP: You must use `convertAsync` when converting to or from a database id for a virtual record.
+     If you try to use `convert` in this situation, `convert` will throw an error.
+
+`convertAsync` is the same as `convert` except it potentially does the conversion asynchronously. So it returns a Promise
+that will eventually resolve with the id converted into the form you want.
+
+In reality, `convertAsync` will do the conversion synchronously except in the case of a database id for a virtual record,
+and will return a Promise that is already resolved.
+
+`convertAsync` will maintain a two-way cache of the association between the `@abcde` part of a record number and
+the campus id inside a database id. This means only the first time a particular `@abcde` or campus id is encountered will
+`convertAsync` need to use the Sierra database and will therefore need to do the conversion asynchronously. After then it
+will be able to do conversions for that `@abcce` or campus id synchronously. (Although that doesn't mean you can start
+using `convert` instead of `convertAsync`. Sorry.)
+
+=== Synopsis
+[source,js]
+----
+convertAsync({
+    id: Number | String,
+    to: a symbol in RecordIdForms,
+    from: a symbol in RecordIdForms = undefined,
+    recordType: String = undefined,
+    initialPeriod: Boolean = false,
+    strongKeysForVirtualRecords: Boolean = false,
+}) => Promise<String>
+----
+
+=== Examples
+
+.Using ECMAScript 2017
+[source, js]
+----
+const { convertAsync, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+
+async function a() {
+    await convertAsync('1970745744342089', to: RecordIdForms.WEAK_RECORD_KEY) // => 'b572489@hsill'
+}
+----
+
+.Using ECMAScript 2016
+[source, js]
+----
+const { convertAsync, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+
+function a() {
+    convertAsync('1970745744342089', to: RecordIdForms.WEAK_RECORD_KEY)
+    .then(weakRecordKey => {
+        // => 'b572489@hsill'
+    })
+    .catch(err => {
+        // Handle the error
+    })
+}
+----
+
+
+=== Parameters
+
+See `convert` for details on the parameters.
+
+=== Errors
+
+`convertAsync` will not throw an error directly (notwithstanding any bugs). It will always return a Promise.
+
+The Promise returned from `convertAsync` will reject in the same situations in which `convert` would throw an error.
+Except of course for when you are converting to or from a database id for a virtual record.
 
 
 
 
 == detect
 
-WARNING: Take heed that detection is not validation. If you give `detect` a string that is not a valid record id,
-         it could incorrectly detect it.
+CAUTION: Take heed that detection is not validation. If you give `detect` a string that is not a valid record id,
+         it could incorrectly detect it. Do not rely on `detect` returning `undefined` for invalid record ids.
+         Similarly do not assume `detect` not returning `undefined` means the record id is valid.
 
+TIP: You can detect a database id without having set up `sierra-db-as-promised`.
+     You can also detect an absolute API URL without having set up `SIERRA_API_HOST`.
+
+=== Synopsis
+
+[source,js]
+detect(id: Number | String) => a symbol in RecordIdForms | undefined
+
+=== Examples
 [source,js]
 ----
 const { detect, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+
+detect(undefined) // => undefined
+detect('') // => undefined
+detect('something random, but see the warning above!') // => undefined
 
 detect(3696836) // => RecordIdForms.RECORD_NUMBER
 detect('3696836') // => RecordIdForms.RECORD_NUMBER
 detect('o369683') // => RecordIdForms.WEAK_RECORD_KEY
 detect('i3696836') // => RecordIdForms.AMBIGUOUS_RECORD_KEY
 detect('i36968367') // => RecordIdForms.STRONG_RECORD_KEY
-detect(450975262916) // => RecordIdForms.DATABASE_ID
 detect('450975262916') // => RecordIdForms.DATABASE_ID
 detect('v4/items/3696836') // => RecordIdForms.RELATIVE_V4_API_URL
 detect('https://sierra.library.edu/iii/sierra-api/v4/items/3696836') // => RecordIdForms.ABSOLUTE_V4_API_URL
 ----
 
-`detect` correctly detects record keys that have the initial period, for example `.o369683` and `.i36968367`. It also
-correctly detects virtual records like `587634@abcde`, `i587634@abcde`, `.i5876345@abcde` and `v4/items/587634@abcde`.
-
-You can detect a database id without having to set up `sierra-db-as-promised`.
-Similarly yYou can also detect an API URL without having to set up `SIERRA_API_HOST`.
+`detect` correctly detects record keys that have an initial period, for example `.o369683` and `.i36968367`. It also
+correctly detects record ids for virtual records like `587634@abcde`, `i587634@abcde`, `.i5876345@abcde` and
+`v4/items/587634@abcde`.
 
 * https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Detection-logic[Detection logic]
 

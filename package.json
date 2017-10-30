@@ -1,7 +1,7 @@
 {
   "name": "@sydneyunilibrary/sierra-record-id",
   "version": "1.0.0",
-  "description": "Translates between the various forms of identifying a record in Sierra.",
+  "description": "Converts between the various forms of identifying a record in Sierra.",
   "license": "GPL-3.0",
   "main": "index.js",
   "repository": "SydneyUniLibrary/sierra-record-id",
