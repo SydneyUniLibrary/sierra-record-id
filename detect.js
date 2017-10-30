@@ -39,7 +39,7 @@ const CODE_POINT_PERIOD = '.'.codePointAt(0)
 
 function detect(recordIdString) {
   let form = RecordIdForms.UNKNOWN_FORM
-  //if (recordIdString) {
+  if (recordIdString) {
     const trimmedRecordIdString = recordIdString.trim()
     const firstCodePoint = trimmedRecordIdString.codePointAt(0)
     if (firstCodePoint === CODE_POINT_PERIOD) {
@@ -57,13 +57,13 @@ function detect(recordIdString) {
         form = RecordIdForms.RECORD_NUMBER
       }
     }
-  //}
+  }
   return form
 }
 
 
 function detectRecordKeyStrength(recordIdString) {
-  let form = RecordIdForms.AMBIGUOUS_RECORD_KEY
+  let form
   const recordIdStringLength = recordIdString.length
   const firstRecordIdStringCodePoint = recordIdString.codePointAt(0)
   const indexOfFirstAt = recordIdString.indexOf('@')
@@ -74,10 +74,12 @@ function detectRecordKeyStrength(recordIdString) {
   const lastRecordNumCodePoint = recordNum.codePointAt(recordNumLength - 1)
   if (lastRecordNumCodePoint === CODE_POINT_LOWER_X) {
     form = RecordIdForms.STRONG_RECORD_KEY
-  } else if (recordNumLength === 8) {
-    form = RecordIdForms.STRONG_RECORD_KEY
   } else if (recordNumLength === 6) {
     form = RecordIdForms.WEAK_RECORD_KEY
+  } else if (recordNumLength === 7) {
+    form = RecordIdForms.AMBIGUOUS_RECORD_KEY
+  } else if (recordNumLength === 8) {
+    form = RecordIdForms.STRONG_RECORD_KEY
   }
   return form
 }

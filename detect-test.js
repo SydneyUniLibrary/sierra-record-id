@@ -26,6 +26,21 @@ const RecordIdForms = sierraRecordId.RecordIdForms
 
 describe('detect', function () {
 
+  const invalidRecordIds = [
+    undefined,
+    null,
+    '',
+    'something random, but see the warning above!'
+  ]
+
+  describe('coping with invalid record ids', function () {
+    for (const form of invalidRecordIds) {
+      it(`should return undefined when given ${form}`, function () {
+        expect(detect(form)).to.be.undefined
+      })
+    }
+  })
+
   const knownRecordNumbers = [
     '164905',
     '1666521',
@@ -138,7 +153,7 @@ describe('detect', function () {
     }
   })
 
-  describe('detecting relative v4 api urls', function () {
+  describe('detecting absolute v4 api urls', function () {
     const baseUrl = 'https://sierra.library.usyd.edu.au/iii/sierra-api/'
     for (const relativeForm of knownRelativeV4ApiUrls) {
       const form = baseUrl + relativeForm
