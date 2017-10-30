@@ -67,38 +67,66 @@ Notes:
 
 
 
-## Detecting the form
+## API
 
-`sierra-record-id` detects the form of the record id as follows (in order, after trimming whitespace):
 
-1. If the form starts with `.`, then it is a record key and `sierra-record-id` goes on to determine if it is strong or weak.
+### detect
+
+Take heed that detecting is not validation. If you give `sierra-record-id` a string that is not a valid record id,
+it could incorrectly detect it.  
+
+```
+const { detect, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+
+detect(3696836) // => RecordIdForms.RECORD_NUMBER
+detect('3696836') // => RecordIdForms.RECORD_NUMBER
+detect('o369683') // => RecordIdForms.WEAK_RECORD_KEY
+detect('i3696836') // => RecordIdForms.AMBIGUOUS_RECORD_KEY
+detect('i36968367') // => RecordIdForms.STRONG_RECORD_KEY
+detect(450975262916) // => RecordIdForms.DATABASE_ID
+detect('450975262916') // => RecordIdForms.DATABASE_ID
+detect('v4/items/3696836') // => RecordIdForms.RELATIVE_V4_API_URL
+detect('https://sierra.library.edu/iii/sierra-api/v4/items/3696836') // => RecordIdForms.ABSOLUTE_V4_API_URL
+```
+
+`detect` correctly detects record keys that have the initial period, for example `.o369683` and `.i36968367`. It also
+correctly detects virtual records like `587634@abcde`, `i587634@abcde`, `.i5876345@abcde` and `v4/items/587634@abcde`.
+
+#### Ambiguous record keys
+
+Because record numbers can be 6 or 7 digits, `i3696836` is ambiguous. It could be a weak record key for the 7 digit
+record number `3696836`, or it could be a strong key for the 6 digit record number `369683` with `6` being the check digit.
+
+The previous paragraph notwithstanding, if the key for a 6 digit record number has an `x` check digit 
+(for example `o100007x`), `detect` will detect it as being strong and not as being ambiguous.
+
+#### Detection logic
+
+`detect` detects the form of the record id as follows (in order, after trimming whitespace):
+
+1. If the form starts with `.`, then it is a record key and `detect` calls `detectRecordKeyStrength`.
 2. If the form starts with `https://` and contains `/v4/`, then it is an absolute v4 API URL.
 3. If the form starts with `v4/`, then it is a relative v4 API URL.
-4. If the form starts with a letter, then it is a record key and `sierra-record-id` goes on to determine if it is strong or weak.
+4. If the form starts with a letter, then it is a record key and `detect` calls `detectRecordKeyStrength`.
 5. If the form is a string 12 or more digits, then it is a database id.
 6. If the from starts with a digit, then it is a record number.
 7. Otherwise the form is unknown.
 
 You can detect a database id without having to set up `sierra-db-as-promised`.
-You can also detect an API URL without having to set up `SIERRA_API_HOST`.
+Similarly yYou can also detect an API URL without having to set up `SIERRA_API_HOST`.
 
-Take heed that detecting is not validation. If you give `sierra-record-id` a string that is not a valid record id,
-it could incorrectly detect it.  
+#### Detecting the strength of a record key
 
-### Detecting if a record key is strong or weak
+`detectRecordKeyStrength` (which `detect` calls) detects the strength of a record key as follows:
 
-`sierra-record-id` detects if a record key is strong or weak as follows:
-
-1. `sierra-record-id` strips that off any virtual record part (like `@abcde`), any period prefix, and the record type character.
+1. `detectRecordKeyStrength` strips that off any virtual record part (like `@abcde`), any initial period,
+   and the record type character.
 2. If what's left ends in `x`, then the record key is strong.
 3. If what's left is a string of 8 digits, then the record key is strong.
 4. If what's left is a string of 6 digits, then the record key is weak.
-5. If the final digit is a valid checksum for the proceeding digits, then the record key is strong.
-6. Otherwise the record key is weak.
+5. Otherwise the record key is ambiguous.
 
-Because record numbers can be 6 or 7 digits, `i3696836` is ambiguous. It could be a weak record key for the 7 digit record number `3696836`,
-or it could be a strong key for the 6 digit record number `369683` with `6` being the check digit.
-`sierra-record-id` presumes in this situation, that if the last digit is a valid check digit then it is a strong key for a 6 digit record number.
+`detectRecordKeyStrength` does not attempt to validate the check digit in a record key.
 
 
 
