@@ -9,6 +9,14 @@
     "node": ">=8.0.0"
   },
   "dependencies": {
+    "@sydneyunilibrary/sierra-record-check-digit": "github:SydneyUniLibrary/sierra-record-check-digit#v1.0",
     "dotenv": "^4.0.0"
+  },
+  "devDependencies": {
+    "chai": "*",
+    "mocha": "*"
+  },
+  "scripts": {
+    "test": "mocha *-test.js"
   }
 }
