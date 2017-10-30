@@ -1,0 +1,133 @@
+:toc:
+:toclevels: 1
+:toc-placement!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+= sierra-record-id
+
+Translates between the various forms of identifying a record in Sierra.
+
+toc::[]
+
+
+
+
+== How to use
+
+[source,bash]
+npm install 'SydneyUniLibrary/sierra-record-id#v1.0'
+
+
+=== How to set up for virtual records
+
+If you need to translate to or from database ids for virtual records, you will need to set up access to the Sierra
+database. Follow the instruction on https://github.com/SydneyUniLibrary/sierra-db-as-promised#how-to-use[how to use sierra-db-as-promised].
+If you don't do this, then `sierra-record-id` will throw an error if you try to translate to or from the database id
+for a virtual record.
+
+=== How to set up for Sierra API URLs
+
+If you need to translate to or from API URLs you will need to configure Sierra's host name. You do this in a way that is
+compatible with https://github.com/SydneyUniLibrary/sierra-api-as-promised[sierra-api-as-promised].
+In other words, if you have already set up `sierra-api-as-promised` you are already set up for using Sierra API URIs
+with `sierra-record-id`.
+
+At a minimum, you need to set `SIERRA_API_HOST` in your process's environment.
+
+You can do that in any manner you choose. However if you create a `.env` file in the root directory of your project like
+the following, `sierra-record-id` will read it and set up your process's environment for you.
+
+[source]
+SIERRA_API_HOST=sierra.library.edu
+
+[NOTE]
+`SIERRA_API_HOST` needs to be the name of Sierra's application server, and not Sierra's database server.
+
+
+
+
+== Forms of record id
+
+`sierra-record-id` uses the following terminology/nomenclature to refer to the different forms of identifying a record
+in Sierra.
+
+More details are on https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Forms-of-record-id[the wiki page].
+
+[options="header"]
+|===
+| Form of record id   | Example            | Virtual record example
+| Record number       | `3696836`          | `587634@abcde`
+| Weak record key     | `i3696836`         | `i587634@abcde`
+| Strong record key   | `i36968365`        | `i5876345@abcde`
+| Database id         | `450975262916`     | `28192594886437`
+| Relative v4 API URL | `v4/items/3696836` | `v4/items/587634@abcde`
+| Absolute v4 API URL
+| `https://sierra.library.edu/iii/sierra-api/v4/items/3696836`
+| `https://sierra.library.edu/iii/sierra-api/v4/items/587634@abcde`
+|===
+
+
+
+
+
+== detect
+
+WARNING: Take heed that detection is not validation. If you give `detect` a string that is not a valid record id,
+         it could incorrectly detect it.
+
+[source,js]
+----
+const { detect, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+
+detect(3696836) // => RecordIdForms.RECORD_NUMBER
+detect('3696836') // => RecordIdForms.RECORD_NUMBER
+detect('o369683') // => RecordIdForms.WEAK_RECORD_KEY
+detect('i3696836') // => RecordIdForms.AMBIGUOUS_RECORD_KEY
+detect('i36968367') // => RecordIdForms.STRONG_RECORD_KEY
+detect(450975262916) // => RecordIdForms.DATABASE_ID
+detect('450975262916') // => RecordIdForms.DATABASE_ID
+detect('v4/items/3696836') // => RecordIdForms.RELATIVE_V4_API_URL
+detect('https://sierra.library.edu/iii/sierra-api/v4/items/3696836') // => RecordIdForms.ABSOLUTE_V4_API_URL
+----
+
+`detect` correctly detects record keys that have the initial period, for example `.o369683` and `.i36968367`. It also
+correctly detects virtual records like `587634@abcde`, `i587634@abcde`, `.i5876345@abcde` and `v4/items/587634@abcde`.
+
+You can detect a database id without having to set up `sierra-db-as-promised`.
+Similarly yYou can also detect an API URL without having to set up `SIERRA_API_HOST`.
+
+* https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Detection-logic[Detection logic]
+
+=== Ambiguous record keys
+
+Because record numbers can be 6 or 7 digits, `i3696836` is ambiguous. It could be a weak record key for the 7 digit
+record number `3696836`, or it could be a strong key for the 6 digit record number `369683` with `6` being the check digit.
+
+The previous paragraph notwithstanding, if the key for a 6 digit record number has an `x` check digit
+(for example `o100007x`), `detect` will detect it as being strong and not as being ambiguous.
+
+
+
+
+== License
+
+Copyright (c) 2017  The University of Sydney Library
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
