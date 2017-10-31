@@ -38,7 +38,7 @@ const CODE_POINT_PERIOD = '.'.codePointAt(0)
 
 
 function detect(recordIdString) {
-  let form = RecordIdForms.UNKNOWN_FORM
+  let form
   if (recordIdString) {
     const trimmedRecordIdString = recordIdString.trim()
     const firstCodePoint = trimmedRecordIdString.codePointAt(0)
