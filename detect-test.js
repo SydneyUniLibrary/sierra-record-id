@@ -26,24 +26,6 @@ const detect = sierraRecordId.detect
 const RecordIdForms = sierraRecordId.RecordIdForms
 const { arbitraries, testSierraConfig } = require('./test-support')
 
-chai.use(require('chai-string'));
-
-
-
-describe.skip('the custom JSVerify arbitraries', function () {
-  jsv.property('recordNumber', arbitraries.recordNumber, x => /^\d{6,7}(@[a-z0-9]{1,5})?$/.test(x))
-  jsv.property('weakRecordKey', arbitraries.weakRecordKey, x => /^.?[a-z]\d{6,7}(@[a-z0-9]{1,5})?$/.test(x))
-  jsv.property('strongRecordKey', arbitraries.strongRecordKey, x => /^.?[a-z]\d{6,7}[x0-9](@[a-z0-9]{1,5})?$/.test(x))
-  jsv.property('databaseId', arbitraries.databaseId, x => /^\d{12,}$/.test(x))
-  jsv.property('v4RelativeApiUrl', arbitraries.relativeV4ApiUrl, x => /^v4\/[a-z]+\/\d{6,7}(@[a-z0-9]{1,5})?$/.test(x))
-  jsv.property('v4AbsoluteApiUrl', arbitraries.absoluteV4ApiUrl, x => {
-    expect(x).to.startWith(testSierraConfig.baseUrl)
-    expect(x).to.match(/v4\/[a-z]+\/\d{6,7}(@[a-z0-9]{1,5})?$/)
-    return true
-  })
-})
-
-
 
 describe('detect', function () {
 
