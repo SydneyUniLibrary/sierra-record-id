@@ -6,7 +6,7 @@
   "main": "index.js",
   "repository": "SydneyUniLibrary/sierra-record-id",
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=8.9.0 <9"
   },
   "dependencies": {
     "@sydneyunilibrary/sierra-record-check-digit": "github:SydneyUniLibrary/sierra-record-check-digit#v1.0",
