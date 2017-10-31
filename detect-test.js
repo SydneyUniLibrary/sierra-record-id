@@ -24,38 +24,37 @@ const jsv = require('jsverify')
 const sierraRecordId = require('./index')
 const detect = sierraRecordId.detect
 const RecordIdForms = sierraRecordId.RecordIdForms
-const { arbitraries, testSierraConfig } = require('./test-support')
+const { arbitraries, chaiProperty } = require('./test-support')
 
 
 describe('detect', function () {
 
-  jsv.property('detects record numbers', arbitraries.recordNumber, x => {
+  chaiProperty('detects record numbers', arbitraries.recordNumber, x => {
     expect(detect(x)).to.equal(RecordIdForms.RECORD_NUMBER)
-    return true
   })
-  jsv.property('detects weak record keys', arbitraries.unambiguousWeakRecordKey, x => {
+
+  chaiProperty('detects weak record keys', arbitraries.unambiguousWeakRecordKey, x => {
     expect(detect(x)).to.equal(RecordIdForms.WEAK_RECORD_KEY)
-    return true
   })
-  jsv.property('detects ambiguous record keys', arbitraries.ambiguousRecordKey, x => {
+
+  chaiProperty('detects ambiguous record keys', arbitraries.ambiguousRecordKey, x => {
     expect(detect(x)).to.equal(RecordIdForms.AMBIGUOUS_RECORD_KEY)
-    return true
   })
-  jsv.property('detects strong record keys', arbitraries.unambiguousStrongRecordKey, x => {
+
+  chaiProperty('detects strong record keys', arbitraries.unambiguousStrongRecordKey, x => {
     expect(detect(x)).to.equal(RecordIdForms.STRONG_RECORD_KEY)
-    return true
   })
-  jsv.property('detects database ids', arbitraries.databaseId, x => {
+
+  chaiProperty('detects database ids', arbitraries.databaseId, x => {
     expect(detect(x)).to.equal(RecordIdForms.DATABASE_ID)
-    return true
   })
-  jsv.property('detects relative v4 api urls', arbitraries.relativeV4ApiUrl, x => {
+
+  chaiProperty('detects relative v4 api urls', arbitraries.relativeV4ApiUrl, x => {
     expect(detect(x)).to.equal(RecordIdForms.RELATIVE_V4_API_URL)
-    return true
   })
-  jsv.property('detects absolute v4 api urls', arbitraries.absoluteV4ApiUrl, x => {
+
+  chaiProperty('detects absolute v4 api urls', arbitraries.absoluteV4ApiUrl, x => {
     expect(detect(x)).to.equal(RecordIdForms.ABSOLUTE_V4_API_URL)
-    return true
   })
 
   describe('copes with invalid record ids', function () {

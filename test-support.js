@@ -21,6 +21,15 @@
 const jsv = require('jsverify')
 
 
+function chaiProperty(name, ...rest) {
+  const prop = rest.pop()
+  jsv.property(name, ...rest, (...values) => {
+    prop(...values)
+    return true
+  })
+}
+
+
 const testSierraConfig = Object.freeze({
   apiHost: 'sierra.library.usyd.edu.au',
   path: '/iii/sierra-api/',
@@ -126,5 +135,6 @@ const arbitraries = Object.freeze({
 
 module.exports = {
   arbitraries,
+  chaiProperty,
   testSierraConfig
 }
