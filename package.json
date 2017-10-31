@@ -14,6 +14,8 @@
   },
   "devDependencies": {
     "chai": "*",
+    "chai-string": "^1.4.0",
+    "jsverify": "^0.8.3",
     "mocha": "*"
   },
   "scripts": {
