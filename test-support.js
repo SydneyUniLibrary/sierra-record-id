@@ -135,7 +135,10 @@ function _recNum(size = undefined) {
   if (size === undefined) {
     return jsv.oneof([_recNum(6), _recNum(7)])
   } else {
-    return _arbitraryFromGenerator(_fixedSizeArrayGenerator(size, _DIGIT_CHAR.generator).map(_1 => _1.join('')))
+    return jsv.suchthat(
+      _arbitraryFromGenerator(_fixedSizeArrayGenerator(size, _DIGIT_CHAR.generator).map(_1 => _1.join(''))),
+      _1 => !_1.startsWith('0')
+    )
   }
 }
 

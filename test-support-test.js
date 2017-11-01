@@ -37,73 +37,73 @@ describe('test-support arbitrary', function () {
     chaiProperty(
       'defaults',
       arbitrary.recordNumber(),
-      id => expect(id).to.match(/^\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'virtual never',
       arbitrary.recordNumber({ virtual: arbitrary.NEVER }),
-      id => expect(id).to.match(/^\d{6,7}$/)
+      id => expect(id).to.match(/^[1-9]\d{5,6}$/)
     )
 
     chaiProperty(
       'virtual always',
       arbitrary.recordNumber({ virtual: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^\d{6,7}@[a-z0-9]{1,5}$/)
+      id => expect(id).to.match(/^[1-9]\d{5,6}@[a-z0-9]{1,5}$/)
     )
 
     chaiProperty(
       'virtual sometimes',
       arbitrary.recordNumber({ virtual: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 6',
       arbitrary.recordNumber({ size: 6 }),
-      id => expect(id).to.match(/^\d{6}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^[1-9]\d{5}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 6, virtual never',
       arbitrary.recordNumber({ size: 6, virtual: arbitrary.NEVER }),
-      id => expect(id).to.match(/^\d{6}$/)
+      id => expect(id).to.match(/^[1-9]\d{5}$/)
     )
 
     chaiProperty(
       'size 6, virtual always',
       arbitrary.recordNumber({ size: 6, virtual: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^\d{6}@[a-z0-9]{1,5}$/)
+      id => expect(id).to.match(/^[1-9]\d{5}@[a-z0-9]{1,5}$/)
     )
 
     chaiProperty(
       'size 6, virtual sometimes',
       arbitrary.recordNumber({ size: 6, virtual: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^\d{6}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^[1-9]\d{5}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 7',
       arbitrary.recordNumber({ size: 7 }),
-      id => expect(id).to.match(/^\d{7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^[1-9]\d{6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 7, virtual never',
       arbitrary.recordNumber({ size: 7, virtual: arbitrary.NEVER }),
-      id => expect(id).to.match(/^\d{7}$/)
+      id => expect(id).to.match(/^[1-9]\d{6}$/)
     )
 
     chaiProperty(
       'size 7, virtual always',
       arbitrary.recordNumber({ size: 7, virtual: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^\d{7}@[a-z0-9]{1,5}$/)
+      id => expect(id).to.match(/^[1-9]\d{6}@[a-z0-9]{1,5}$/)
     )
 
     chaiProperty(
       'size 7, virtual sometimes',
       arbitrary.recordNumber({ size: 7, virtual: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^\d{7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^[1-9]\d{6}(@[a-z0-9]{1,5})?$/)
     )
 
   })
@@ -117,79 +117,79 @@ describe('test-support arbitrary', function () {
     chaiProperty(
       'defaults',
       arbitrary.weakRecordKey(),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'virtual never',
       arbitrary.weakRecordKey({ virtual: arbitrary.NEVER }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}$/)
     )
 
     chaiProperty(
       'virtual always',
       arbitrary.weakRecordKey({ virtual: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}@[a-z0-9]{1,5}$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}@[a-z0-9]{1,5}$/)
     )
 
     chaiProperty(
       'virtual sometimes',
       arbitrary.weakRecordKey({ virtual: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 6',
       arbitrary.weakRecordKey({ size: 6 }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 7',
       arbitrary.weakRecordKey({ size: 7 }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'initial period always',
       arbitrary.weakRecordKey({ initialPeriod: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^\.[boicaprnveltj]\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'initial period never',
       arbitrary.weakRecordKey({ initialPeriod: arbitrary.NEVER }),
-      id => expect(id).to.match(/^[boicaprnveltj]\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'initial period sometimes',
       arbitrary.weakRecordKey({ initialPeriod: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'ambiguous always',
       arbitrary.weakRecordKey({ ambiguous: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'ambiguous never',
       arbitrary.weakRecordKey({ ambiguous: arbitrary.NEVER }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'ambiguous sometimes',
       arbitrary.weakRecordKey({ ambiguous: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'api compatible only',
       arbitrary.weakRecordKey({ apiCompatibleOnly: true }),
-      id => expect(id).to.match(/^\.?[abniop]\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[abniop][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
   })
@@ -203,55 +203,55 @@ describe('test-support arbitrary', function () {
     chaiProperty(
       'defaults',
       arbitrary.strongRecordKey(),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 6',
       arbitrary.strongRecordKey({ size: 6 }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 7',
       arbitrary.strongRecordKey({ size: 7 }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{7}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{6}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'ambiguous always',
       arbitrary.strongRecordKey({ ambiguous: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6}[0-9](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5}[0-9](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'ambiguous never',
       arbitrary.strongRecordKey({ ambiguous: arbitrary.NEVER }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj](\d{6}x|\d{7}[0-9x])(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj]([1-9]\d{5}x|[1-9]\d{6}[0-9x])(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'ambiguous sometimes',
       arbitrary.strongRecordKey({ ambiguous: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'ambiguous always, size 6',
       arbitrary.strongRecordKey({ ambiguous: arbitrary.ALWAYS, size: 6 }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6}[0-9](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5}[0-9](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'ambiguous never, size 6',
       arbitrary.strongRecordKey({ ambiguous: arbitrary.NEVER, size: 6 }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6}x(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5}x(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'ambiguous sometimes, size 6',
       arbitrary.strongRecordKey({ ambiguous: arbitrary.SOMETIMES, size: 6 }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
     it('ambiguous always, size 7', function () {
@@ -262,56 +262,56 @@ describe('test-support arbitrary', function () {
     chaiProperty(
       'ambiguous never, size 7',
       arbitrary.strongRecordKey({ ambiguous: arbitrary.NEVER, size: 7 }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{7}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{6}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'ambiguous sometimes, size 7',
       arbitrary.strongRecordKey({ ambiguous: arbitrary.SOMETIMES, size: 7 }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{7}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{6}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'virtual never',
       arbitrary.strongRecordKey({ virtual: arbitrary.NEVER }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}[0-9x]$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x]$/)
     )
 
     chaiProperty(
       'virtual always',
       arbitrary.strongRecordKey({ virtual: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}[0-9x]@[a-z0-9]{1,5}$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x]@[a-z0-9]{1,5}$/)
     )
 
     chaiProperty(
       'virtual sometimes',
       arbitrary.strongRecordKey({ virtual: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'initial period always',
       arbitrary.strongRecordKey({ initialPeriod: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^\.[boicaprnveltj]\d{6,7}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'initial period never',
       arbitrary.strongRecordKey({ initialPeriod: arbitrary.NEVER }),
-      id => expect(id).to.match(/^[boicaprnveltj]\d{6,7}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^[boicaprnveltj][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'initial period sometimes',
       arbitrary.strongRecordKey({ initialPeriod: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^\.?[boicaprnveltj]\d{6,7}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
 
     chaiProperty(
       'api compatible only',
       arbitrary.strongRecordKey({ apiCompatibleOnly: true }),
-      id => expect(id).to.match(/^\.?[abniop]\d{6,7}[0-9x](@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\.?[abniop][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
     )
 
   })
@@ -324,7 +324,7 @@ describe('test-support arbitrary', function () {
 
     function unpack(id) {
       expect(id).to.be.a('string')
-      let bigIntId = BigInt(id)
+      const bigIntId = BigInt(id)
       return {
         campusId: bigIntId.shiftRight(48).and(0xFFFF).toJSNumber(),
         recordTypeChar: String.fromCodePoint(bigIntId.shiftRight(32).and(0xFFFF).toJSNumber()),
@@ -420,37 +420,37 @@ describe('test-support arbitrary', function () {
     chaiProperty(
       'defaults',
       arbitrary.relativeV4ApiUrl(),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'virtual never',
       arbitrary.relativeV4ApiUrl({ virtual: arbitrary.NEVER }),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}$/)
+      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
     )
 
     chaiProperty(
       'virtual always',
       arbitrary.relativeV4ApiUrl({ virtual: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}@[a-z0-9]{1,5}$/)
+      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}@[a-z0-9]{1,5}$/)
     )
 
     chaiProperty(
       'virtual sometimes',
       arbitrary.relativeV4ApiUrl({ virtual: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 6',
       arbitrary.relativeV4ApiUrl({ size: 6 }),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 7',
       arbitrary.relativeV4ApiUrl({ size: 7 }),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{7}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{6}(@[a-z0-9]{1,5})?$/)
     )
 
   })
@@ -466,7 +466,7 @@ describe('test-support arbitrary', function () {
       arbitrary.absoluteV4ApiUrl(),
       id => {
         expect(() => new URL(id)).to.not.throw()
-        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}(@[a-z0-9]{1,5})?$/)
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
       }
     )
 
@@ -475,7 +475,7 @@ describe('test-support arbitrary', function () {
       arbitrary.absoluteV4ApiUrl({ virtual: arbitrary.NEVER }),
       id => {
         expect(() => new URL(id)).to.not.throw()
-        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}$/)
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
       }
     )
 
@@ -484,7 +484,7 @@ describe('test-support arbitrary', function () {
       arbitrary.absoluteV4ApiUrl({ virtual: arbitrary.ALWAYS }),
       id => {
         expect(() => new URL(id)).to.not.throw()
-        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}@[a-z0-9]{1,5}$/)
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}@[a-z0-9]{1,5}$/)
       }
     )
 
@@ -493,7 +493,7 @@ describe('test-support arbitrary', function () {
       arbitrary.absoluteV4ApiUrl({ virtual: arbitrary.SOMETIMES }),
       id => {
         expect(() => new URL(id)).to.not.throw()
-        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}(@[a-z0-9]{1,5})?$/)
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
       }
     )
 
@@ -502,7 +502,7 @@ describe('test-support arbitrary', function () {
       arbitrary.absoluteV4ApiUrl({ size: 6 }),
       id => {
         expect(() => new URL(id)).to.not.throw()
-        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6}(@[a-z0-9]{1,5})?$/)
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5}(@[a-z0-9]{1,5})?$/)
       }
     )
 
@@ -511,7 +511,7 @@ describe('test-support arbitrary', function () {
       arbitrary.absoluteV4ApiUrl({ size: 7 }),
       id => {
         expect(() => new URL(id)).to.not.throw()
-        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{7}(@[a-z0-9]{1,5})?$/)
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{6}(@[a-z0-9]{1,5})?$/)
       }
     )
 
@@ -520,7 +520,7 @@ describe('test-support arbitrary', function () {
       arbitrary.absoluteV4ApiUrl({ sierraApiHost: 'some.library' }),
       id => {
         expect(() => new URL(id)).to.not.throw()
-        expect(id).to.match(/^https:\/\/some\.library\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}(@[a-z0-9]{1,5})?$/)
+        expect(id).to.match(/^https:\/\/some\.library\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
       }
     )
 
@@ -529,7 +529,7 @@ describe('test-support arbitrary', function () {
       arbitrary.absoluteV4ApiUrl({ sierraApiPath: '/test/sierra-api-beta/' }),
       id => {
         expect(() => new URL(id)).to.not.throw()
-        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/test\/sierra-api-beta\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}(@[a-z0-9]{1,5})?$/)
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/test\/sierra-api-beta\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
       }
     )
 
@@ -538,7 +538,7 @@ describe('test-support arbitrary', function () {
       arbitrary.absoluteV4ApiUrl({ sierraApiHost: 'some.library', sierraApiPath: '/test/sierra-api-beta/' }),
       id => {
         expect(() => new URL(id)).to.not.throw()
-        expect(id).to.match(/^https:\/\/some\.library\/test\/sierra-api-beta\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/\d{6,7}(@[a-z0-9]{1,5})?$/)
+        expect(id).to.match(/^https:\/\/some\.library\/test\/sierra-api-beta\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
       }
     )
 
