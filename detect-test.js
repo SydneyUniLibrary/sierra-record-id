@@ -24,38 +24,58 @@ const jsv = require('jsverify')
 const sierraRecordId = require('./index')
 const detect = sierraRecordId.detect
 const RecordIdForms = sierraRecordId.RecordIdForms
-const { arbitraries, chaiProperty } = require('./test-support')
+const { arbitrary, chaiProperty } = require('./test-support')
 
 
 describe('detect', function () {
 
-  chaiProperty('detects record numbers', arbitraries.recordNumber, x => {
-    expect(detect(x)).to.equal(RecordIdForms.RECORD_NUMBER)
-  })
+  chaiProperty(
+    'detects record numbers',
+    arbitrary.recordNumber(),
+    id => expect(detect(id)).to.equal(RecordIdForms.RECORD_NUMBER)
+  )
 
-  chaiProperty('detects weak record keys', arbitraries.unambiguousWeakRecordKey, x => {
-    expect(detect(x)).to.equal(RecordIdForms.WEAK_RECORD_KEY)
-  })
+  chaiProperty(
+    'detects weak record keys',
+    arbitrary.weakRecordKey({ ambiguous: arbitrary.NEVER }),
+    id => expect(detect(id)).to.equal(RecordIdForms.WEAK_RECORD_KEY)
+  )
 
-  chaiProperty('detects ambiguous record keys', arbitraries.ambiguousRecordKey, x => {
-    expect(detect(x)).to.equal(RecordIdForms.AMBIGUOUS_RECORD_KEY)
-  })
+  chaiProperty(
+    'detects strong record keys',
+    arbitrary.strongRecordKey({ ambiguous: arbitrary.NEVER }),
+    id => expect(detect(id)).to.equal(RecordIdForms.STRONG_RECORD_KEY)
+  )
 
-  chaiProperty('detects strong record keys', arbitraries.unambiguousStrongRecordKey, x => {
-    expect(detect(x)).to.equal(RecordIdForms.STRONG_RECORD_KEY)
-  })
+  chaiProperty(
+    'detects ambiguous weak record keys',
+    arbitrary.weakRecordKey({ ambiguous: arbitrary.ALWAYS }),
+    id => expect(detect(id)).to.equal(RecordIdForms.AMBIGUOUS_RECORD_KEY)
+  )
 
-  chaiProperty('detects database ids', arbitraries.databaseId, x => {
-    expect(detect(x)).to.equal(RecordIdForms.DATABASE_ID)
-  })
+  chaiProperty(
+    'detects ambiguous strong record keys',
+    arbitrary.strongRecordKey({ ambiguous: arbitrary.ALWAYS }),
+    id => expect(detect(id)).to.equal(RecordIdForms.AMBIGUOUS_RECORD_KEY)
+  )
 
-  chaiProperty('detects relative v4 api urls', arbitraries.relativeV4ApiUrl, x => {
-    expect(detect(x)).to.equal(RecordIdForms.RELATIVE_V4_API_URL)
-  })
+  chaiProperty(
+    'detects database ids',
+    arbitrary.databaseId(),
+    id => expect(detect(id)).to.equal(RecordIdForms.DATABASE_ID)
+  )
 
-  chaiProperty('detects absolute v4 api urls', arbitraries.absoluteV4ApiUrl, x => {
-    expect(detect(x)).to.equal(RecordIdForms.ABSOLUTE_V4_API_URL)
-  })
+  chaiProperty(
+    'detects relative v4 api urls',
+    arbitrary.relativeV4ApiUrl(),
+    id => expect(detect(id)).to.equal(RecordIdForms.RELATIVE_V4_API_URL)
+  )
+
+  chaiProperty(
+    'detects absolute v4 api urls',
+    arbitrary.absoluteV4ApiUrl(),
+    id => expect(detect(id)).to.equal(RecordIdForms.ABSOLUTE_V4_API_URL)
+  )
 
   describe('copes with invalid record ids', function () {
     const invalidRecordIds = [
