@@ -21,9 +21,8 @@
 const chai = require('chai')
 const expect = chai.expect
 const jsv = require('jsverify')
-const sierraRecordId = require('./index')
-const detect = sierraRecordId.detect
-const RecordIdForms = sierraRecordId.RecordIdForms
+
+const { detect, RecordIdForms } = require('.')
 const { arbitrary, chaiProperty } = require('./test-support')
 
 
@@ -82,7 +81,7 @@ describe('detect', function () {
       undefined,
       null,
       '',
-      'something random, but see the warning above!'
+      "something random, but don't count on it!"
     ]
     for (const form of invalidRecordIds) {
       it(`should return undefined when given ${form}`, function () {
