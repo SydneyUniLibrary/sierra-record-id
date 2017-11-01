@@ -36,10 +36,6 @@ function _arbitraryFromGenerator(gen) {
   return jsv.bless({ generator: gen })
 }
 
-function _arbitraryFromFunction(fn) {
-  return _arbitraryFromGenerator(jsv.generator.bless(fn))
-}
-
 function _joinArbitraries(sep, ...arbitraries) {
   return _arbitraryFromGenerator(
     jsv.generator.combine(...arbitraries.map(a => a.generator), (...parts) => parts.join(sep))
@@ -79,9 +75,9 @@ const ALWAYS = Symbol('ALWAYS')
 
 const _DIGIT_CHAR = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ])
 const _LOWER_ALPHA_DIGIT_CHAR = jsv.elements('abcdefghijklmnopqrstuvwxyz0123456789'.split(''))
+const _CHECK_DIGIT = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x' ])
 const _ALL_RECORD_TYPE_CHARS = jsv.elements([ 'b', 'o', 'i', 'c', 'a', 'p', 'r', 'n', 'v', 'e', 'l', 't', 'j' ])
 const _API_COMPATIBLE_TYPE_CHARS = jsv.elements([ 'a', 'b', 'n', 'i', 'o', 'p' ])
-const _CHECK_DIGIT = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x' ])
 const _V4_API_RECORD_TYPES = jsv.elements(['authorities', 'bibs', 'invoices', 'items', 'orders', 'patrons'])
 
 const _ARBITRARY_HOST = (
@@ -130,27 +126,31 @@ function _initialPeriod(when) {
 }
 
 
-function _recordTypeChar(apiCompatibleOnly = false) {
+function recordTypeChar(apiCompatibleOnly = false) {
   return apiCompatibleOnly ? _API_COMPATIBLE_TYPE_CHARS : _ALL_RECORD_TYPE_CHARS
 }
 
 
-const _DEFAULT_REC_NUM = jsv.oneof([_recNum(6), _recNum(7)])
 function _recNum(size = undefined) {
   if (size === undefined) {
-    return _DEFAULT_REC_NUM
+    return jsv.oneof([_recNum(6), _recNum(7)])
   } else {
     return _arbitraryFromGenerator(_fixedSizeArrayGenerator(size, _DIGIT_CHAR.generator).map(_1 => _1.join('')))
   }
 }
 
 
+const campusCode = (
+  _arbitraryFromGenerator(
+    _variableSizeArrayGenerator(1, 5, _LOWER_ALPHA_DIGIT_CHAR.generator).map(_1 => `@${_1.join('')}`)
+  )
+)
+
+
 function _virtualRecordPart(when) {
   switch (when) {
     case ALWAYS:
-      return _arbitraryFromGenerator(
-        _variableSizeArrayGenerator(1, 5, _LOWER_ALPHA_DIGIT_CHAR.generator).map(_1 => `@${_1.join('')}`)
-      )
+      return campusCode
     case NEVER:
       return jsv.unit
     case SOMETIMES:
@@ -186,7 +186,7 @@ function weakRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual = 
     return _joinArbitraries(
       '',
       _initialPeriod(initialPeriod),
-      _recordTypeChar(apiCompatibleOnly),
+      recordTypeChar(apiCompatibleOnly),
       _recNum(size),
       _virtualRecordPart(virtual),
     )
@@ -216,7 +216,7 @@ function strongRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual 
       return _joinArbitraries(
         '',
         _initialPeriod(initialPeriod),
-        _recordTypeChar(apiCompatibleOnly),
+        recordTypeChar(apiCompatibleOnly),
         _recNum(size),
         checkDigitGenerator,
         _virtualRecordPart(virtual),
@@ -228,7 +228,7 @@ function strongRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual 
         return _joinArbitraries(
           '',
           _initialPeriod(initialPeriod),
-          _recordTypeChar(apiCompatibleOnly),
+          recordTypeChar(apiCompatibleOnly),
           _recNum(size),
           _CHECK_DIGIT,
           _virtualRecordPart(virtual),
@@ -264,7 +264,7 @@ function databaseId({ size = undefined, virtual = SOMETIMES, apiCompatibleOnly =
   return _arbitraryFromGenerator(
     jsv.generator.combine(
       jsv.integer(...virtualRange).generator,
-      _recordTypeChar(apiCompatibleOnly).generator,
+      recordTypeChar(apiCompatibleOnly).generator,
       jsv.integer(...recNumRange).generator,
       (campusId, recordTypeChar, recNum) => (
         BigInt(campusId).shiftLeft(48)
@@ -297,6 +297,8 @@ module.exports = {
     NEVER,
     SOMETIMES,
     ALWAYS,
+    recordTypeChar,
+    campusCode,
     recordNumber,
     weakRecordKey,
     strongRecordKey,
