@@ -145,7 +145,7 @@ function _recNum(size = undefined) {
 
 const campusCode = (
   _arbitraryFromGenerator(
-    _variableSizeArrayGenerator(1, 5, _LOWER_ALPHA_DIGIT_CHAR.generator).map(_1 => `@${_1.join('')}`)
+    _variableSizeArrayGenerator(1, 5, _LOWER_ALPHA_DIGIT_CHAR.generator).map(_1 => _1.join(''))
   )
 )
 
@@ -153,7 +153,7 @@ const campusCode = (
 function _virtualRecordPart(when) {
   switch (when) {
     case ALWAYS:
-      return campusCode
+      return campusCode.smap(_1 => `@${_1}`, _1 => _1.split(1))
     case NEVER:
       return jsv.unit
     case SOMETIMES:

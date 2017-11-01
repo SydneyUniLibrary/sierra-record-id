@@ -72,34 +72,71 @@ function convert({ id, to, from, recordTypeChar, initialPeriod = false, strongKe
   }
   switch (from) {
     case RecordIdForms.RECORD_NUMBER:
-      return _convertFromRecordNumber(id, to, initialPeriod, recordTypeChar, strongKeysForVirtualRecords, context)
+      return _convertFromRecordNumber({ id, to, initialPeriod, recordTypeChar, strongKeysForVirtualRecords, context })
+    case RecordIdForms.DATABASE_ID:
+      return _convertFromDatabaseId({ id, to, initialPeriod, strongKeysForVirtualRecords, context })
   }
   throw new Error(`Cannot convert from ${from.toString()} to ${to.toString()} for record id ${id}`)
 }
 
 
-function _convertFromRecordNumber(id, to, initialPeriod, recordTypeChar, strongKeysForVirtualRecords, context) {
+function _convertFromRecordNumber({ id, to, initialPeriod, recordTypeChar, strongKeysForVirtualRecords, context }) {
   const [ recNum, campusCode ] = id.split('@', 2)
   switch (to) {
     case RecordIdForms.RECORD_NUMBER:
       return id
     case RecordIdForms.WEAK_RECORD_KEY:
-      return _convertToWeakRecordKey(initialPeriod, recordTypeChar, recNum, campusCode)
+      return _convertToWeakRecordKey({ initialPeriod, recordTypeChar, recNum, campusCode })
     case RecordIdForms.STRONG_RECORD_KEY:
-      return _convertToStrongRecordKey(initialPeriod, recordTypeChar, recNum, campusCode, strongKeysForVirtualRecords)
+      return _convertToStrongRecordKey({ initialPeriod, recordTypeChar, recNum, campusCode, strongKeysForVirtualRecords })
     case RecordIdForms.DATABASE_ID:
-      return _convertToDatabaseId(recordTypeChar, recNum, campusCode, context)
+      return _convertToDatabaseId({ recordTypeChar, recNum, campusCode, context })
     case RecordIdForms.RELATIVE_V4_API_URL:
-      return _convertToRelativeV4ApiUrl(recordTypeChar, recNum, campusCode)
+      return _convertToRelativeV4ApiUrl({ recordTypeChar, recNum, campusCode })
     case RecordIdForms.ABSOLUTE_V4_API_URL:
-      return _convertToAbsoluteV4ApiUrl(recordTypeChar, recNum, campusCode, context)
+      return _convertToAbsoluteV4ApiUrl({ recordTypeChar, recNum, campusCode, context })
     default:
       throw new Error(`Cannot convert from record number to ${to.toString()} for record id ${id}`)
   }
 }
 
 
-function _convertToRecordNumber(recNum, campusCode) {
+function _convertFromDatabaseId({ id, to, initialPeriod, strongKeysForVirtualRecords, context }) {
+  const { recordMetadataTable } = context
+  const bigIntId = BigInt(id)
+  const campusId = bigIntId.shiftRight(48).and(0xFFFF).toJSNumber()
+  const recordTypeChar = String.fromCodePoint(bigIntId.shiftRight(32).and(0xFFFF).toJSNumber())
+  const recNum = bigIntId.and(0xFFFFFFFF).toString()
+  let campusCode = ''
+  if (campusId) {
+    if (recordMetadataTable) {
+      campusCode = recordMetadataTable.mapFromCampusId(campusId)
+    } else {
+      // TODO: Get the record metadata row from Sierra, determine the campus code, and cache the lookup
+      throw new Error('Not implemented yet: convert from a database id for a virtual record')
+    }
+    if (campusCode === undefined) {
+      throw new Error(`Failed to map campus id to campus code: ${campusId}`)
+    }
+  }
+  switch (to) {
+    case RecordIdForms.RECORD_NUMBER:
+      return _convertToRecordNumber({ recNum, campusCode })
+    case RecordIdForms.WEAK_RECORD_KEY:
+      return _convertToWeakRecordKey({ initialPeriod, recordTypeChar, recNum, campusCode })
+    case RecordIdForms.STRONG_RECORD_KEY:
+      return _convertToStrongRecordKey({ initialPeriod, recordTypeChar, recNum, campusCode, strongKeysForVirtualRecords })
+    case RecordIdForms.RELATIVE_V4_API_URL:
+      return _convertToRelativeV4ApiUrl({ recordTypeChar, recNum, campusCode })
+    case RecordIdForms.ABSOLUTE_V4_API_URL:
+      return _convertToAbsoluteV4ApiUrl({ recordTypeChar, recNum, campusCode, context })
+    default:
+      throw new Error(`Cannot convert from database id to ${to.toString()} for record id ${id}`)
+  }
+}
+
+
+function _convertToRecordNumber({ recNum, campusCode }) {
   return [
     recNum,
     campusCode ? `@` : '',
@@ -108,7 +145,7 @@ function _convertToRecordNumber(recNum, campusCode) {
 }
 
 
-function _convertToWeakRecordKey(initialPeriod, recordTypeChar, recNum, campusCode) {
+function _convertToWeakRecordKey({ initialPeriod, recordTypeChar, recNum, campusCode }) {
   if (!recordTypeChar) {
     throw new Error('recordTypeChar is required when converting to a weak record key')
   }
@@ -122,7 +159,7 @@ function _convertToWeakRecordKey(initialPeriod, recordTypeChar, recNum, campusCo
 }
 
 
-function _convertToStrongRecordKey(initialPeriod, recordTypeChar, recNum, campusCode, strongKeysForVirtualRecords, checkDigit) {
+function _convertToStrongRecordKey({ initialPeriod, recordTypeChar, recNum, campusCode, strongKeysForVirtualRecords, checkDigit }) {
   if (!recordTypeChar) {
     throw new Error('recordTypeChar is required when converting to a strong record key')
   }
@@ -136,12 +173,12 @@ function _convertToStrongRecordKey(initialPeriod, recordTypeChar, recNum, campus
       campusCode ? campusCode : '',
     ].join('')
   } else {
-    return _convertToWeakRecordKey(initialPeriod, recordTypeChar, recNum, campusCode)
+    return _convertToWeakRecordKey({ initialPeriod, recordTypeChar, recNum, campusCode })
   }
 }
 
 
-function _convertToDatabaseId(recordTypeChar, recNum, campusCode, context) {
+function _convertToDatabaseId({ recordTypeChar, recNum, campusCode, context }) {
   const { recordMetadataTable } = context
   if (!recordTypeChar) {
     throw new Error('recordTypeChar is required when converting to a database id')
@@ -169,21 +206,21 @@ function _convertToDatabaseId(recordTypeChar, recNum, campusCode, context) {
 }
 
 
-function _convertToRelativeV4ApiUrl(recordType, recNum, campusCode) {
-  if (!recordType) {
+function _convertToRelativeV4ApiUrl({ recordTypeChar, recNum, campusCode }) {
+  if (!recordTypeChar) {
     throw new Error('recordTypeChar is required when converting to a relative v4 API URL')
   }
   return [
     'v4',
-    recordType.length === 1 ? convertRecordTypeCharToApiRecordType(recordType) : recordType,
-    _convertToRecordNumber(recNum, campusCode)
+    convertRecordTypeCharToApiRecordType(recordTypeChar),
+    _convertToRecordNumber({ recNum, campusCode })
   ].join('/')
 }
 
 
-function _convertToAbsoluteV4ApiUrl(recordType, recNum, campusCode, context) {
+function _convertToAbsoluteV4ApiUrl({ recordTypeChar, recNum, campusCode, context }) {
   const { sierraApiHost, sierraApiPath } = context
-  if (!recordType) {
+  if (!recordTypeChar) {
     throw new Error('recordTypeChar is required when converting to an absolute v4 API URL')
   }
   const host = sierraApiHost || process.env['SIERRA_API_HOST']
@@ -195,9 +232,9 @@ function _convertToAbsoluteV4ApiUrl(recordType, recNum, campusCode, context) {
     host,
     sierraApiPath || process.env['SIERRA_API_PATH'] || '/iii/sierra-api/',
     'v4/',
-    recordType.length === 1 ? convertRecordTypeCharToApiRecordType(recordType) : recordType,
+    convertRecordTypeCharToApiRecordType(recordTypeChar),
     '/',
-    _convertToRecordNumber(recNum, campusCode)
+    _convertToRecordNumber({ recNum, campusCode })
   ].join('')
 }
 
