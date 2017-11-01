@@ -102,23 +102,14 @@ function _convertFromRecordNumber({ id, to, initialPeriod, recordTypeChar, stron
 
 
 function _convertFromDatabaseId({ id, to, initialPeriod, strongKeysForVirtualRecords, context }) {
-  const { recordMetadataTable } = context
   const bigIntId = BigInt(id)
   const campusId = bigIntId.shiftRight(48).and(0xFFFF).toJSNumber()
+  if (campusId !== 0) {
+    throw new Error('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
+  }
   const recordTypeChar = String.fromCodePoint(bigIntId.shiftRight(32).and(0xFFFF).toJSNumber())
   const recNum = bigIntId.and(0xFFFFFFFF).toString()
-  let campusCode = ''
-  if (campusId) {
-    if (recordMetadataTable) {
-      campusCode = recordMetadataTable.mapFromCampusId(campusId)
-    } else {
-      // TODO: Get the record metadata row from Sierra, determine the campus code, and cache the lookup
-      throw new Error('Not implemented yet: convert from a database id for a virtual record')
-    }
-    if (campusCode === undefined) {
-      throw new Error(`Failed to map campus id to campus code: ${campusId}`)
-    }
-  }
+  const campusCode = ''
   switch (to) {
     case RecordIdForms.RECORD_NUMBER:
       return _convertToRecordNumber({ recNum, campusCode })
@@ -178,28 +169,15 @@ function _convertToStrongRecordKey({ initialPeriod, recordTypeChar, recNum, camp
 }
 
 
-function _convertToDatabaseId({ recordTypeChar, recNum, campusCode, context }) {
-  const { recordMetadataTable } = context
+function _convertToDatabaseId({ recordTypeChar, recNum, campusCode }) {
   if (!recordTypeChar) {
     throw new Error('recordTypeChar is required when converting to a database id')
   }
-  let campusId = BigInt.zero
   if (campusCode) {
-    let mapResult
-    if (recordMetadataTable) {
-      mapResult = recordMetadataTable.mapFromCampusCode(campusCode)
-    } else {
-      // TODO: Get the record metadata row from Sierra, determine the campus id, and cache the lookup
-      throw new Error('Not implemented yet: convert an id for a virtual record to a database id')
-    }
-    if (mapResult === undefined) {
-      throw new Error(`Failed to map campus code to campus id: ${campusCode}`)
-    }
-    campusId = BigInt(mapResult)
+    throw new Error('Cannot use convert to convert to database ids for virtual records. Must use convertAsync instead')
   }
   return (
-    campusId.shiftLeft(48)
-    .add(BigInt(recordTypeChar.codePointAt(0)).shiftLeft(32))
+    BigInt(recordTypeChar.codePointAt(0)).shiftLeft(32)
     .add(BigInt(recNum))
     .toString()
   )

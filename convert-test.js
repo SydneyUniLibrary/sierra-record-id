@@ -32,31 +32,6 @@ const { ALWAYS, NEVER, SOMETIMES } = arbitrary
 
 
 
-class TestRecordMetadataTable {
-  constructor() {
-    this._campusId = undefined
-    this._campusCode = undefined
-  }
-  mapFromCampusCode(campusCode) {
-    if (this._campusCode !== campusCode) {
-      this._campusId = jsv.random(0, 0xFFFF)
-      this._campusCode = campusCode
-    }
-    return this._campusId
-  }
-  mapFromCampusId(campusId) {
-    if (this._campusId !== campusId) {
-      this._campusId = campusId
-      this._campusCode = jsv.sampler(arbitrary.campusCode)(1)
-    }
-    return this._campusCode
-  }
-}
-
-const _TEST_RECORD_METADATA_TABLE = new TestRecordMetadataTable()
-
-
-
 describe('convert', function () {
 
   describe('from record number', function () {
@@ -172,21 +147,29 @@ describe('convert', function () {
 
     chaiProperty(
       'to database id',
-      arbitrary.recordNumber(),
+      arbitrary.recordNumber({ virtual: NEVER }),
       arbitrary.recordTypeChar(),
       ( id, recordTypeChar ) => {
         const databaseId =
-          convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.DATABASE_ID, recordTypeChar,
-            context: { recordMetadataTable: _TEST_RECORD_METADATA_TABLE } })
+          convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.DATABASE_ID, recordTypeChar })
         expect(databaseId).to.be.a('string')
         expect(databaseId).to.match(/^\d+$/)
-        const { recNum, virtPart } = unpack(id)
-        const campusCode = virtPart.slice(1)
-        const expectedCampusId = campusCode ? _TEST_RECORD_METADATA_TABLE.mapFromCampusCode(campusCode) : 0
+        const { recNum } = unpack(id)
         let databaseIdAsBigInt = BigInt(databaseId)
-        expect(databaseIdAsBigInt.shiftRight(48).and(0xFFFF).toJSNumber()).to.equal(expectedCampusId)
+        expect(databaseIdAsBigInt.shiftRight(48).and(0xFFFF).toJSNumber()).to.equal(0)
         expect(String.fromCodePoint(databaseIdAsBigInt.shiftRight(32).and(0xFFFF).toJSNumber())).to.equal(recordTypeChar)
         expect(databaseIdAsBigInt.and(0xFFFFFFFF).toString()).to.equal(recNum)
+      }
+    )
+
+    chaiProperty(
+      'to database id, throws for virtual records',
+      arbitrary.recordNumber({ virtual: ALWAYS }),
+      arbitrary.recordTypeChar(),
+      ( id, recordTypeChar ) => {
+        const fn =
+          () => convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.DATABASE_ID, recordTypeChar })
+        expect(fn).to.throw('Cannot use convert to convert to database ids for virtual records. Must use convertAsync instead')
       }
     )
 
@@ -228,7 +211,7 @@ describe('convert', function () {
       ( id, recordTypeChar ) => {
         const fn =
           () => convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.ABSOLUTE_V4_API_URL, recordTypeChar })
-        expect(fn).to.throw(/SIERRA_API_HOST must be set/)
+        expect(fn).to.throw(/SIERRA_API_HOST must be set/i)
       }
     )
 
@@ -256,7 +239,9 @@ describe('convert', function () {
 
   describe('from database id', function () {
 
-    const context = { recordMetadataTable: _TEST_RECORD_METADATA_TABLE }
+    // Rule: Cannot use the convert function to convert from a database id for a virtual record.
+    //       Must be the convertAsync function instead.
+    //       So all the tests below are only for non-virtual record ids.
 
     function unpack(id) {
       expect(id).to.be.a('string')
@@ -270,139 +255,122 @@ describe('convert', function () {
 
     chaiProperty(
       'to record number',
-      arbitrary.databaseId(),
+      arbitrary.databaseId({ virtual: NEVER }),
       id => {
         const recordNumber =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.RECORD_NUMBER, context })
-        const { campusId, recNum } = unpack(id)
-        const virtPart = campusId === 0 ? '' : `@${_TEST_RECORD_METADATA_TABLE.mapFromCampusId(campusId)}`
+          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.RECORD_NUMBER })
         expect(recordNumber).to.be.a('string')
-        expect(recordNumber).to.match(/^[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
-        expect(recordNumber).to.equal(`${recNum}${virtPart}`)
+        expect(recordNumber).to.match(/^[1-9]\d{5,6}$/)
+        const { recNum } = unpack(id)
+        expect(recordNumber).to.equal(recNum)
       }
     )
 
     chaiProperty(
       'to weak record key',
-      arbitrary.databaseId(),
+      arbitrary.databaseId({ virtual: NEVER }),
       id => {
         const weakRecordKey =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.WEAK_RECORD_KEY, context })
-        const { campusId, recordTypeChar, recNum } = unpack(id)
-        const virtPart = campusId === 0 ? '' : `@${_TEST_RECORD_METADATA_TABLE.mapFromCampusId(campusId)}`
+          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.WEAK_RECORD_KEY })
         expect(weakRecordKey).to.be.a('string')
-        expect(weakRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
-        expect(weakRecordKey).to.equal(`${recordTypeChar}${recNum}${virtPart}`)
+        expect(weakRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}$/)
+        const { recordTypeChar, recNum } = unpack(id)
+        expect(weakRecordKey).to.equal(`${recordTypeChar}${recNum}`)
       }
     )
 
     chaiProperty(
       'to weak record key with initial period',
-      arbitrary.databaseId(),
+      arbitrary.databaseId({ virtual: NEVER }),
       id => {
         const weakRecordKey =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.WEAK_RECORD_KEY, initialPeriod: true,
-                    context })
-        const { campusId, recordTypeChar, recNum } = unpack(id)
-        const virtPart = campusId === 0 ? '' : `@${_TEST_RECORD_METADATA_TABLE.mapFromCampusId(campusId)}`
+          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.WEAK_RECORD_KEY, initialPeriod: true })
         expect(weakRecordKey).to.be.a('string')
-        expect(weakRecordKey).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
-        expect(weakRecordKey).to.equal(`.${recordTypeChar}${recNum}${virtPart}`)
+        expect(weakRecordKey).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}$/)
+        const { recordTypeChar, recNum } = unpack(id)
+        expect(weakRecordKey).to.equal(`.${recordTypeChar}${recNum}`)
       }
     )
 
     chaiProperty(
-      'to strong record key for non-virtual records',
+      'to strong record key',
       arbitrary.databaseId({ virtual: NEVER }),
       id => {
         const strongRecordKey =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.STRONG_RECORD_KEY, context })
-        const { recordTypeChar, recNum } = unpack(id)
-        const expectedCheckDigit = calcCheckDigit(recNum)
+          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.STRONG_RECORD_KEY })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x]$/)
+        const { recordTypeChar, recNum } = unpack(id)
+        const expectedCheckDigit = calcCheckDigit(recNum)
         expect(strongRecordKey).to.equal(`${recordTypeChar}${recNum}${expectedCheckDigit}`)
       }
     )
 
-    chaiProperty(
-      'to strong record key for virtual records',
-      arbitrary.databaseId({ virtual: ALWAYS }),
-      id => {
-        const strongRecordKey =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.STRONG_RECORD_KEY, context })
-        const { campusId, recordTypeChar, recNum } = unpack(id)
-        const virtPart = campusId === 0 ? '' : `@${_TEST_RECORD_METADATA_TABLE.mapFromCampusId(campusId)}`
-        expect(strongRecordKey).to.be.a('string')
-        expect(strongRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}@[a-z0-9]{1,5}$/)
-        expect(strongRecordKey).to.equal(`${recordTypeChar}${recNum}${virtPart}`)
-      }
-    )
-
-    chaiProperty(
-      'to strong record key for virtual records',
-      arbitrary.databaseId({ virtual: ALWAYS }),
-      id => {
-        const strongRecordKey =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.STRONG_RECORD_KEY, context,
-                    strongKeysForVirtualRecords: true })
-        const { campusId, recordTypeChar, recNum } = unpack(id)
-        const virtPart = campusId === 0 ? '' : `@${_TEST_RECORD_METADATA_TABLE.mapFromCampusId(campusId)}`
-        const expectedCheckDigit = calcCheckDigit(recNum)
-        expect(strongRecordKey).to.be.a('string')
-        expect(strongRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}[0-9x]@[a-z0-9]{1,5}$/)
-        expect(strongRecordKey).to.equal(`${recordTypeChar}${recNum}${expectedCheckDigit}${virtPart}`)
-      }
-    )
-
+    // database id -> database id is the exception to the rule
     chaiProperty(
       'to database id',
       arbitrary.databaseId(),
       id => {
         const databaseId =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.DATABASE_ID, context })
+          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.DATABASE_ID })
+        expect(databaseId).to.be.a('string')
+        expect(databaseId).to.match(/^\d+$/)
         expect(databaseId).to.equal(id)
       }
     )
 
     chaiProperty(
       'to relative v4 api url',
-      arbitrary.databaseId({ apiCompatibleOnly: true }),
+      arbitrary.databaseId({ virtual: NEVER, apiCompatibleOnly: true }),
       id => {
         const relativeV4ApiUrl =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.RELATIVE_V4_API_URL, context })
+          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.RELATIVE_V4_API_URL })
         expect(relativeV4ApiUrl).to.be.a('string')
-        expect(relativeV4ApiUrl).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
-        const { campusId, recordTypeChar, recNum } = unpack(id)
-        const virtPart = campusId === 0 ? '' : `@${_TEST_RECORD_METADATA_TABLE.mapFromCampusId(campusId)}`
+        expect(relativeV4ApiUrl).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
+        const { recordTypeChar, recNum } = unpack(id)
         const expectedRecordType = convertRecordTypeCharToApiRecordType(recordTypeChar)
-        expect(relativeV4ApiUrl).to.equal(`v4/${expectedRecordType}/${recNum}${virtPart}`)
+        expect(relativeV4ApiUrl).to.equal(`v4/${expectedRecordType}/${recNum}`)
       }
     )
 
     chaiProperty(
       'to absolute v4 api url',
-      arbitrary.databaseId({ apiCompatibleOnly: true }),
+      arbitrary.databaseId({ virtual: NEVER, apiCompatibleOnly: true }),
       id => {
         const absoluteV4ApiUrl =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.ABSOLUTE_V4_API_URL,
-                    context: Object.assign({}, context, { sierraApiHost: 'some.library' }) })
+          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.ABSOLUTE_V4_API_URL, context: { sierraApiHost: 'some.library' } })
         expect(absoluteV4ApiUrl).to.be.a('string')
-        expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
-        const { campusId, recordTypeChar, recNum } = unpack(id)
-        const virtPart = campusId === 0 ? '' : `@${_TEST_RECORD_METADATA_TABLE.mapFromCampusId(campusId)}`
+        expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
+        const { recordTypeChar, recNum } = unpack(id)
         const expectedRecordType = convertRecordTypeCharToApiRecordType(recordTypeChar)
-        expect(absoluteV4ApiUrl).to.equal(`https://some.library/iii/sierra-api/v4/${expectedRecordType}/${recNum}${virtPart}`)
+        expect(absoluteV4ApiUrl).to.equal(`https://some.library/iii/sierra-api/v4/${expectedRecordType}/${recNum}`)
       }
     )
 
     chaiProperty(
       'to absolute v4 api url, throws if SIERRA_API_HOST is not set',
-      arbitrary.databaseId({ apiCompatibleOnly: true }),
+      arbitrary.databaseId({ virtual: NEVER, apiCompatibleOnly: true }),
       id => {
-        const fn =
-          () => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.ABSOLUTE_V4_API_URL, context })
-        expect(fn).to.throw(/SIERRA_API_HOST must be set/)
+        const fn = () => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.ABSOLUTE_V4_API_URL })
+        expect(fn).to.throw(/SIERRA_API_HOST must be set/i)
+      }
+    )
+
+    chaiProperty(
+      'throws for virtual records',
+      arbitrary.databaseId({ virtual: ALWAYS, apiCompatibleOnly: true }),
+      id => {
+        expect(() => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.RECORD_NUMBER })).
+          to.throw('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
+        expect(() => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.WEAK_RECORD_KEY })).
+          to.throw('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
+        expect(() => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.STRONG_RECORD_KEY })).
+          to.throw('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
+        // database id -> database id is the exception to the rule
+        expect(() => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.RELATIVE_V4_API_URL })).
+          to.throw('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
+        expect(() => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.ABSOLUTE_V4_API_URL })).
+          to.throw('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
       }
     )
 
