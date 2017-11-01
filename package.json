@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@sydneyunilibrary/sierra-record-check-digit": "github:SydneyUniLibrary/sierra-record-check-digit#v1.0",
+    "big-integer": "^1.6.25",
     "dotenv": "^4.0.0"
   },
   "devDependencies": {
-    "big-integer": "^1.6.25",
     "chai": "*",
     "chai-string": "^1.4.0",
     "jsverify": "^0.8.3",
