@@ -105,7 +105,7 @@ TIP: Any combination of from and to is possible, not just the ones demonstrated 
 
 [source,js]
 ----
-const { convert, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+const { convert, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
 
 convert({ id: 558315, to: RecordIdForms.WEAK_RECORD_KEY, recordType: 'o' })
 // => 'o558315'
@@ -145,7 +145,7 @@ CAUTION: Records that have 7 digits are ambiguous. So you have to give the `from
 
 [source,js]
 ----
-const { convert, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+const { convert, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
 
 convert({ id: 'b3384639', from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
 // => '420910179640'  Because record num is 3384632
@@ -278,7 +278,7 @@ convertAsync({
 .Using ECMAScript 2017
 [source, js]
 ----
-const { convertAsync, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+const { convertAsync, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
 
 async function a() {
     await convertAsync('1970745744342089', to: RecordIdForms.WEAK_RECORD_KEY) // => 'b572489@hsill'
@@ -288,7 +288,7 @@ async function a() {
 .Using ECMAScript 2016
 [source, js]
 ----
-const { convertAsync, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+const { convertAsync, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
 
 function a() {
     convertAsync('1970745744342089', to: RecordIdForms.WEAK_RECORD_KEY)
@@ -333,7 +333,7 @@ detect(id: Number | String) => a symbol in RecordIdForms | undefined
 === Examples
 [source,js]
 ----
-const { detect, RecordIdForms } = require('@SydneyUniLibrary/sierra-record-id')
+const { detect, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
 
 detect(undefined) // => undefined
 detect('') // => undefined
