@@ -23,11 +23,25 @@ const BigInt = require('big-integer')
 const jsv = require('jsverify')
 
 
+const _DEFAULT_JSV_ASSERT_OPTIONS = Object.freeze({ tests: process.env['JSV_TESTS'] || 100 })
+
 function chaiProperty(...jsverifyPropertyArgs) {
-  const propCheckFn = jsverifyPropertyArgs.pop()
-  jsv.property(...jsverifyPropertyArgs, (...values) => {
-    propCheckFn(...values)
-    return true
+  const [ name, ...arbs ] = jsverifyPropertyArgs
+  const propCheckFn = arbs.pop()
+  const jsvAssertOptions = (
+    typeof arbs[arbs.length - 1] === 'object'
+    && typeof(arbs[arbs.length - 1].generator) !== 'function'
+    ? Object.assign({}, _DEFAULT_JSV_ASSERT_OPTIONS, arbs.pop())
+    : Object.assign({}, _DEFAULT_JSV_ASSERT_OPTIONS)  // Grr. jsv.assert mutates jsvAssertOptions
+  )
+  it(name, function () {
+    jsv.assert(
+      jsv.forall(...arbs, (...values) => {
+        propCheckFn(...values)
+        return true
+      }),
+      jsvAssertOptions
+    )
   })
 }
 
