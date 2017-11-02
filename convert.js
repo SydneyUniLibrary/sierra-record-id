@@ -75,6 +75,8 @@ function convert({ id, to, from, recordTypeChar, initialPeriod = false, strongKe
       return _convertFromRecordNumber({ id, to, initialPeriod, recordTypeChar, strongKeysForVirtualRecords, context })
     case RecordIdForms.DATABASE_ID:
       return _convertFromDatabaseId({ id, to, initialPeriod, strongKeysForVirtualRecords, context })
+    case RecordIdForms.RELATIVE_V4_API_URL:
+      return _convertFromRelativeV4ApiUrl({ id, to, initialPeriod, strongKeysForVirtualRecords, context })
   }
   throw new Error(`Cannot convert from ${from.toString()} to ${to.toString()} for record id ${id}`)
 }
@@ -123,6 +125,27 @@ function _convertFromDatabaseId({ id, to, initialPeriod, strongKeysForVirtualRec
       return _convertToAbsoluteV4ApiUrl({ recordTypeChar, recNum, campusCode, context })
     default:
       throw new Error(`Cannot convert from database id to ${to.toString()} for record id ${id}`)
+  }
+}
+
+
+function _convertFromRelativeV4ApiUrl({ id, to, initialPeriod, strongKeysForVirtualRecords, context }) {
+  const [ version, apiRecordType, recordNumber ] = id.split('/', 3)
+  const [ recNum, campusCode ] = recordNumber.split('@', 2)
+  const recordTypeChar = convertApiRecordTypeToRecordTypeChar(apiRecordType)
+  switch (to) {
+    case RecordIdForms.RECORD_NUMBER:
+      return _convertToRecordNumber({ recNum, campusCode })
+    case RecordIdForms.WEAK_RECORD_KEY:
+      return _convertToWeakRecordKey({ initialPeriod, recordTypeChar, recNum, campusCode })
+    case RecordIdForms.STRONG_RECORD_KEY:
+      return _convertToStrongRecordKey({ initialPeriod, recordTypeChar, recNum, campusCode, strongKeysForVirtualRecords })
+    case RecordIdForms.DATABASE_ID:
+      return _convertToDatabaseId({ recordTypeChar, recNum, campusCode, context })
+    case RecordIdForms.ABSOLUTE_V4_API_URL:
+      return _convertToAbsoluteV4ApiUrl({ recordTypeChar, recNum, campusCode, context })
+    default:
+      throw new Error(`Cannot convert from relative v4 API URL to ${to.toString()} for record id ${id}`)
   }
 }
 

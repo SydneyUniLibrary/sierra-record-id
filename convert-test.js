@@ -25,7 +25,7 @@ const { URL } = require('url')
 const { calcCheckDigit } = require('@sydneyunilibrary/sierra-record-check-digit')
 
 const { convert, RecordIdForms } = require('.')
-const { convertRecordTypeCharToApiRecordType } = require('./convert')
+const { convertRecordTypeCharToApiRecordType, convertApiRecordTypeToRecordTypeChar } = require('./convert')
 const { arbitrary, chaiProperty } = require('./test-support')
 
 const { ALWAYS, NEVER, SOMETIMES } = arbitrary
@@ -382,6 +382,96 @@ describe('convert', function () {
 
   describe('from relative v4 api url', function () {
 
+    function unpack(id) {
+      const re = /^v4\/(authorities|bibs|invoices|items|orders|patrons)\/([1-9]\d{5,6})(@[a-z0-9]{1,5})?$/
+      expect(id).to.match(re)
+      const match = re.exec(id)
+      return {
+        recordTypeChar: convertApiRecordTypeToRecordTypeChar(match[1]),
+        recNum: match[2],
+        virtPart: match[3] || '',
+      }
+    }
+
+    chaiProperty(
+      'to record number',
+      arbitrary.relativeV4ApiUrl(),
+      id => {
+        const recordNumber =
+          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.RECORD_NUMBER })
+        expect(recordNumber).to.be.a('string')
+        expect(recordNumber).to.match(/^[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+        const { recNum, virtPart } = unpack(id)
+        expect(recordNumber).to.equal(`${recNum}${virtPart}`)
+      }
+    )
+
+    chaiProperty(
+      'to weak record key',
+      arbitrary.relativeV4ApiUrl(),
+      id => {
+        const weakRecordKey =
+          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.WEAK_RECORD_KEY })
+        expect(weakRecordKey).to.be.a('string')
+        expect(weakRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+        const { recordTypeChar, recNum, virtPart } = unpack(id)
+        expect(weakRecordKey).to.equal(`${recordTypeChar}${recNum}${virtPart}`)
+      }
+    )
+
+    chaiProperty(
+      'to weak record key with initial period',
+      arbitrary.relativeV4ApiUrl(),
+      id => {
+        const weakRecordKey =
+          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.WEAK_RECORD_KEY, initialPeriod: true })
+        expect(weakRecordKey).to.be.a('string')
+        expect(weakRecordKey).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+        const { recordTypeChar, recNum, virtPart } = unpack(id)
+        expect(weakRecordKey).to.equal(`.${recordTypeChar}${recNum}${virtPart}`)
+      }
+    )
+
+    chaiProperty(
+      'to strong record key',
+      arbitrary.relativeV4ApiUrl({ virtual: NEVER }),
+      id => {
+        const strongRecordKey =
+          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.STRONG_RECORD_KEY })
+        expect(strongRecordKey).to.be.a('string')
+        expect(strongRecordKey).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x]$/)
+        const { recordTypeChar, recNum } = unpack(id)
+        const expectedCheckDigit = calcCheckDigit(recNum)
+        expect(strongRecordKey).to.equal(`${recordTypeChar}${recNum}${expectedCheckDigit}`)
+      }
+    )
+
+    chaiProperty(
+      'to database id',
+      arbitrary.relativeV4ApiUrl({ virtual: NEVER }),
+      id => {
+        const databaseId =
+          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.DATABASE_ID })
+        expect(databaseId).to.be.a('string')
+        expect(databaseId).to.match(/^\d+$/)
+        const { recordTypeChar, recNum } = unpack(id)
+        let databaseIdAsBigInt = BigInt(databaseId)
+        expect(databaseIdAsBigInt.shiftRight(48).and(0xFFFF).toJSNumber()).to.equal(0)
+        expect(String.fromCodePoint(databaseIdAsBigInt.shiftRight(32).and(0xFFFF).toJSNumber())).to.equal(recordTypeChar)
+        expect(databaseIdAsBigInt.and(0xFFFFFFFF).toString()).to.equal(recNum)
+      }
+    )
+
+    chaiProperty(
+      'to database id, throws for virtual records',
+      arbitrary.relativeV4ApiUrl({ virtual: ALWAYS }),
+      id => {
+        const fn =
+          () => convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.DATABASE_ID })
+        expect(fn).to.throw('Cannot use convert to convert to database ids for virtual records. Must use convertAsync instead')
+      }
+    )
+
     chaiProperty(
       'to relative v4 api url',
       arbitrary.relativeV4ApiUrl(),
@@ -389,6 +479,29 @@ describe('convert', function () {
         const relativeV4ApiUrl =
                 convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.RELATIVE_V4_API_URL })
         expect(relativeV4ApiUrl).to.equal(id)
+      }
+    )
+
+    chaiProperty(
+      'to absolute v4 api url',
+      arbitrary.relativeV4ApiUrl(),
+      id => {
+        const absoluteV4ApiUrl =
+          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.ABSOLUTE_V4_API_URL,
+            context: { sierraApiHost: 'some.library' } })
+        expect(absoluteV4ApiUrl).to.be.a('string')
+        expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+        expect(absoluteV4ApiUrl).to.equal(`https://some.library/iii/sierra-api/${id}`)
+      }
+    )
+
+    chaiProperty(
+      'to absolute v4 api url, throws if SIERRA_API_HOST is not set',
+      arbitrary.relativeV4ApiUrl(),
+      id => {
+        const fn =
+          () => convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.ABSOLUTE_V4_API_URL })
+        expect(fn).to.throw(/SIERRA_API_HOST must be set/i)
       }
     )
 
