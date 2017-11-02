@@ -37,7 +37,7 @@ describe('convert', function () {
   describe('from record number', function () {
 
     function unpack(id) {
-      const re = /^(\d+)(@.+)?$/
+      const re = /^([1-9]\d{5,6})(@[a-z0-9]{1,5})?$/
       expect(id).to.match(re)
       let match = re.exec(id)
       return {
@@ -221,7 +221,136 @@ describe('convert', function () {
   //---------------------------------------------------------------------------
 
 
-  describe.skip('from weak record key', function () {
+  describe('from weak record key', function () {
+
+    function unpack(id) {
+      const re = /^\.?([boicaprnveltj])([1-9]\d{5,6})(@[a-z0-9]{1,5})?$/
+      expect(id).to.match(re)
+      let match = re.exec(id)
+      return {
+        recordTypeChar: match[1],
+        recNum: match[2],
+        virtPart: match[3] || '',
+      }
+    }
+
+    chaiProperty(
+      'to record number',
+      arbitrary.weakRecordKey(),
+      id => {
+        const recordNumber =
+          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.RECORD_NUMBER })
+        expect(recordNumber).to.be.a('string')
+        expect(recordNumber).to.match(/^[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+        const { recNum, virtPart } = unpack(id)
+        expect(recordNumber).to.equal(`${recNum}${virtPart}`)
+      }
+    )
+
+    chaiProperty(
+      'to weak record key',
+      arbitrary.weakRecordKey(),
+      id => {
+        const recordNumber =
+          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.WEAK_RECORD_KEY })
+        expect(recordNumber).to.be.a('string')
+        expect(recordNumber).to.match(/^[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+        const { recordTypeChar, recNum, virtPart } = unpack(id)
+        expect(recordNumber).to.equal(`${recordTypeChar}${recNum}${virtPart}`)
+      }
+    )
+
+    chaiProperty(
+      'to weak record key with initial period',
+      arbitrary.weakRecordKey(),
+      id => {
+        const recordNumber =
+          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.WEAK_RECORD_KEY, initialPeriod: true })
+        expect(recordNumber).to.be.a('string')
+        expect(recordNumber).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+        const { recordTypeChar, recNum, virtPart } = unpack(id)
+        expect(recordNumber).to.equal(`.${recordTypeChar}${recNum}${virtPart}`)
+      }
+    )
+
+    chaiProperty(
+      'to strong record key',
+      arbitrary.weakRecordKey({ virtual: NEVER }),
+      id => {
+        const strongRecordKey =
+          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.STRONG_RECORD_KEY })
+        expect(strongRecordKey).to.be.a('string')
+        expect(strongRecordKey).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
+        const { recordTypeChar, recNum, virtPart } = unpack(id)
+        const expectedCheckDigit = calcCheckDigit(recNum)
+        expect(strongRecordKey).to.equal(`${recordTypeChar}${recNum}${expectedCheckDigit}${virtPart}`)
+      }
+    )
+
+    chaiProperty(
+      'to database id',
+      arbitrary.weakRecordKey({ virtual: NEVER }),
+      id => {
+        const databaseId =
+          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
+        expect(databaseId).to.be.a('string')
+        expect(databaseId).to.match(/^\d+$/)
+        const { recordTypeChar, recNum } = unpack(id)
+        let databaseIdAsBigInt = BigInt(databaseId)
+        expect(databaseIdAsBigInt.shiftRight(48).and(0xFFFF).toJSNumber()).to.equal(0)
+        expect(String.fromCodePoint(databaseIdAsBigInt.shiftRight(32).and(0xFFFF).toJSNumber())).to.equal(recordTypeChar)
+        expect(databaseIdAsBigInt.and(0xFFFFFFFF).toString()).to.equal(recNum)
+      }
+    )
+
+    chaiProperty(
+      'to database id, throws for virtual records',
+      arbitrary.weakRecordKey({ virtual: ALWAYS }),
+      id => {
+        const fn =
+          () => convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
+        expect(fn).to.throw('Cannot use convert to convert to database ids for virtual records. Must use convertAsync instead')
+      }
+    )
+
+    chaiProperty(
+      'to relative v4 api url',
+      arbitrary.weakRecordKey({ apiCompatibleOnly: true }),
+      id => {
+        const relativeV4ApiUrl =
+          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.RELATIVE_V4_API_URL })
+        expect(relativeV4ApiUrl).to.be.a('string')
+        expect(relativeV4ApiUrl).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+        const { recordTypeChar, recNum, virtPart } = unpack(id)
+        const expectedRecordType = convertRecordTypeCharToApiRecordType(recordTypeChar)
+        expect(relativeV4ApiUrl).to.equal(`v4/${expectedRecordType}/${recNum}${virtPart}`)
+      }
+    )
+
+    chaiProperty(
+      'to absolute v4 api url',
+      arbitrary.weakRecordKey({ apiCompatibleOnly: true }),
+      id => {
+        const absoluteV4ApiUrl =
+          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.ABSOLUTE_V4_API_URL,
+            context: { sierraApiHost: 'some.library' } })
+        expect(absoluteV4ApiUrl).to.be.a('string')
+        expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+        const { recordTypeChar, recNum, virtPart } = unpack(id)
+        const expectedRecordType = convertRecordTypeCharToApiRecordType(recordTypeChar)
+        expect(absoluteV4ApiUrl).to.equal(`https://some.library/iii/sierra-api/v4/${expectedRecordType}/${recNum}${virtPart}`)
+      }
+    )
+
+    chaiProperty(
+      'to absolute v4 api url, throws if SIERRA_API_HOST is not set',
+      arbitrary.weakRecordKey({ apiCompatibleOnly: true }),
+      id => {
+        const fn =
+          () => convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.ABSOLUTE_V4_API_URL })
+        expect(fn).to.throw(/SIERRA_API_HOST must be set/i)
+      }
+    )
 
   })
 
@@ -245,6 +374,7 @@ describe('convert', function () {
 
     function unpack(id) {
       expect(id).to.be.a('string')
+      expect(id).to.match(/^\d+$/)
       const bigIntId = BigInt(id)
       return  {
         campusId: bigIntId.shiftRight(48).and(0xFFFF).toJSNumber(),
