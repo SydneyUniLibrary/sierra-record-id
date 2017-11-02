@@ -22,6 +22,9 @@
 const BigInt = require('big-integer')
 const jsv = require('jsverify')
 
+const { calcCheckDigit } = require('@sydneyunilibrary/sierra-record-check-digit')
+
+
 
 const _DEFAULT_JSV_ASSERT_OPTIONS = Object.freeze({ tests: process.env['JSV_TESTS'] || 100 })
 
@@ -50,10 +53,14 @@ function _arbitraryFromGenerator(gen) {
   return jsv.bless({ generator: gen })
 }
 
-function _joinArbitraries(sep, ...arbitraries) {
+function _combineArbitraries(fn, ...arbitraries) {
   return _arbitraryFromGenerator(
-    jsv.generator.combine(...arbitraries.map(a => a.generator), (...parts) => parts.join(sep))
+    jsv.generator.combine(...arbitraries.map(a => a.generator), fn)
   )
+}
+
+function _joinArbitraries(sep, ...arbitraries) {
+  return _combineArbitraries((...parts) => parts.join(sep), ...arbitraries)
 }
 
 function _fixedSizeArrayGenerator(len, gen) {
@@ -225,29 +232,37 @@ function strongRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual 
         )
       }
     case 6:
-      const checkDigitGenerator = (
-        ambiguous === ALWAYS ? _DIGIT_CHAR
-        : ambiguous === NEVER ? jsv.constant('x')
-        : _CHECK_DIGIT
-      )
-      return _joinArbitraries(
-        '',
-        _initialPeriod(initialPeriod),
-        recordTypeChar(apiCompatibleOnly),
-        _recNum(size),
-        checkDigitGenerator,
-        _virtualRecordPart(virtual),
+      return jsv.suchthat(
+        _combineArbitraries(
+          ( ip, rtc, rn, vp ) => {
+            const cd = calcCheckDigit(rn)
+            return (
+              ambiguous === NEVER && cd !== 'x'
+              ? undefined
+              : ambiguous === ALWAYS && cd === 'x'
+              ? undefined
+              : [ ip, rtc, rn, cd, vp ].join('')
+            )
+          },
+          _initialPeriod(initialPeriod),
+          recordTypeChar(apiCompatibleOnly),
+          recNum(size),
+          _virtualRecordPart(virtual),
+        ),
+        _1 => _1 !== undefined
       )
     case 7:
       if (ambiguous === ALWAYS) {
         throw new Error('Ambiguous 7 digit strong record keys are impossible')
       } else {
-        return _joinArbitraries(
-          '',
+        return _combineArbitraries(
+          ( ip, rtc, rn, vp ) => {
+            const cd = calcCheckDigit(rn)
+            return [ ip, rtc, rn, cd, vp ].join('')
+          },
           _initialPeriod(initialPeriod),
           recordTypeChar(apiCompatibleOnly),
-          _recNum(size),
-          _CHECK_DIGIT,
+          recNum(size),
           _virtualRecordPart(virtual),
         )
       }
