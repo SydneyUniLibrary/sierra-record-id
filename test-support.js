@@ -94,19 +94,44 @@ const SOMETIMES = Symbol('SOMETIMES')
 const ALWAYS = Symbol('ALWAYS')
 
 
-const _DIGIT_CHAR = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ])
-const _LOWER_ALPHA_DIGIT_CHAR = jsv.elements('abcdefghijklmnopqrstuvwxyz0123456789'.split(''))
-const _CHECK_DIGIT = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x' ])
-const _ALL_RECORD_TYPE_CHARS = jsv.elements([ 'b', 'o', 'i', 'c', 'a', 'p', 'r', 'n', 'v', 'e', 'l', 't', 'j' ])
-const _API_COMPATIBLE_TYPE_CHARS = jsv.elements([ 'a', 'b', 'n', 'i', 'o', 'p' ])
-const _V4_API_RECORD_TYPES = jsv.elements(['authorities', 'bibs', 'invoices', 'items', 'orders', 'patrons'])
+const COMPLETELY_INVALID_ID = (
+  jsv.oneof([
+    jsv.oneof([
+      jsv.bool,
+      jsv.datetime,
+      jsv.falsy,
+      jsv.number,
+      jsv.unit,
+      jsv.dict(jsv.string),
+      jsv.array(jsv.string),
 
-const _ARBITRARY_HOST = (
+    ]),
+    jsv.suchthat(jsv.string, _1 => (
+      ! /^\d{12,}$/.test(_1) &&
+      ! /^\.?([boicaprnveltj])?[1-9]\d{5,6}([0-9x])?(@[a-z0-9]{1,5})?$/.test(_1) &&
+      ! /^(https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/)?v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?/.test(_1)
+    ))
+  ])
+)
+
+
+const DIGIT_CHAR = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ])
+const LOWER_ALPHA_DIGIT_CHAR = jsv.elements('abcdefghijklmnopqrstuvwxyz0123456789'.split(''))
+const CHECK_DIGIT = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x' ])
+const ALL_RECORD_TYPE_CHAR = jsv.elements([ 'b', 'o', 'i', 'c', 'a', 'p', 'r', 'n', 'v', 'e', 'l', 't', 'j' ])
+const API_COMPATIBLE_TYPE_CHAR = jsv.elements([ 'a', 'b', 'n', 'i', 'o', 'p' ])
+const V4_API_RECORD_TYPES = jsv.elements(['authorities', 'bibs', 'invoices', 'items', 'orders', 'patrons'])
+
+const CAMPUS_CODE = (
+  _arbitraryFromGenerator(_variableSizeArrayGenerator(1, 5, LOWER_ALPHA_DIGIT_CHAR.generator).map(_1 => _1.join('')))
+)
+
+const URI_HOST = (
   jsv.nearray(jsv.elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~".split('')))
   .smap(_1 => _1.join(''), _1 => _1.split(''))
 )
 
-const _ARBITRARY_PATH = (
+const URI_PATH = (
   jsv.suchthat(
     jsv.nearray(jsv.elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~:@/".split(''))),
     _1 => _1.length !== 1 && _1[0] !== '/'
@@ -132,53 +157,45 @@ const _ARBITRARY_PATH = (
 )
 
 
-
-function _initialPeriod(when) {
+function arbitraryInitialPeriod(when) {
   switch (when) {
     case ALWAYS:
       return jsv.constant('.')
     case NEVER:
       return jsv.unit
     case SOMETIMES:
-      return jsv.oneof([_initialPeriod(ALWAYS), jsv.unit])
+      return jsv.oneof([arbitraryInitialPeriod(ALWAYS), jsv.unit])
     default:
       throw new Error(`initialPeriod is not ALWAYS, NEVER or SOMETIMES: ${when}`)
   }
 }
 
 
-function recordTypeChar(apiCompatibleOnly = false) {
-  return apiCompatibleOnly ? _API_COMPATIBLE_TYPE_CHARS : _ALL_RECORD_TYPE_CHARS
+function arbitraryRecordTypeChar(apiCompatibleOnly = false) {
+  return apiCompatibleOnly ? API_COMPATIBLE_TYPE_CHAR : ALL_RECORD_TYPE_CHAR
 }
 
 
-function _recNum(size = undefined) {
+function arbitraryRecNum(size = undefined) {
   if (size === undefined) {
-    return jsv.oneof([_recNum(6), _recNum(7)])
+    return jsv.oneof([arbitraryRecNum(6), arbitraryRecNum(7)])
   } else {
     return jsv.suchthat(
-      _arbitraryFromGenerator(_fixedSizeArrayGenerator(size, _DIGIT_CHAR.generator).map(_1 => _1.join(''))),
+      _arbitraryFromGenerator(_fixedSizeArrayGenerator(size, DIGIT_CHAR.generator).map(_1 => _1.join(''))),
       _1 => !_1.startsWith('0')
     )
   }
 }
 
 
-const campusCode = (
-  _arbitraryFromGenerator(
-    _variableSizeArrayGenerator(1, 5, _LOWER_ALPHA_DIGIT_CHAR.generator).map(_1 => _1.join(''))
-  )
-)
-
-
-function _virtualRecordPart(when) {
+function arbitraryVirtualRecordPart(when) {
   switch (when) {
     case ALWAYS:
-      return campusCode.smap(_1 => `@${_1}`, _1 => _1.split(1))
+      return CAMPUS_CODE.smap(_1 => `@${_1}`, _1 => _1.split(1))
     case NEVER:
       return jsv.unit
     case SOMETIMES:
-      return jsv.oneof([_virtualRecordPart(ALWAYS), jsv.unit])
+      return jsv.oneof([arbitraryVirtualRecordPart(ALWAYS), jsv.unit])
     default:
       throw new Error(`virtual is not ALWAYS, NEVER or SOMETIMES: ${when}`)
   }
@@ -186,22 +203,22 @@ function _virtualRecordPart(when) {
 
 
 
-function recordNumber({ size = undefined, virtual = SOMETIMES } = {}) {
-  return _joinArbitraries('', _recNum(size), _virtualRecordPart(virtual))
+function arbitraryRecordNumber({ size = undefined, virtual = SOMETIMES } = {}) {
+  return _joinArbitraries('', arbitraryRecNum(size), arbitraryVirtualRecordPart(virtual))
 }
 
 
-function weakRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual = SOMETIMES, ambiguous = SOMETIMES, apiCompatibleOnly = false } = {}) {
+function arbitraryWeakRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual = SOMETIMES, ambiguous = SOMETIMES, apiCompatibleOnly = false } = {}) {
   if (size === undefined) {
     switch (ambiguous) {
       case ALWAYS:
-        return weakRecordKey({ size: 7, initialPeriod, apiCompatibleOnly, virtual, ambiguous })
+        return arbitraryWeakRecordKey({ size: 7, initialPeriod, apiCompatibleOnly, virtual, ambiguous })
       case NEVER:
-        return weakRecordKey({ size: 6, initialPeriod, apiCompatibleOnly, virtual, ambiguous })
+        return arbitraryWeakRecordKey({ size: 6, initialPeriod, apiCompatibleOnly, virtual, ambiguous })
       case SOMETIMES:
         return jsv.oneof([
-          weakRecordKey({ size: 6, initialPeriod, apiCompatibleOnly, virtual, ambiguous }),
-          weakRecordKey({ size: 7, initialPeriod, apiCompatibleOnly, virtual, ambiguous }),
+          arbitraryWeakRecordKey({ size: 6, initialPeriod, apiCompatibleOnly, virtual, ambiguous }),
+          arbitraryWeakRecordKey({ size: 7, initialPeriod, apiCompatibleOnly, virtual, ambiguous }),
         ])
       default:
         throw new Error(`ambiguous is not ALWAYS, NEVER or SOMETIMES: ${ambiguous}`)
@@ -209,10 +226,10 @@ function weakRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual = 
   } else if (ambiguous === SOMETIMES || (size === 6 && ambiguous === NEVER) || (size === 7 && ambiguous === ALWAYS)) {
     return _joinArbitraries(
       '',
-      _initialPeriod(initialPeriod),
-      recordTypeChar(apiCompatibleOnly),
-      _recNum(size),
-      _virtualRecordPart(virtual),
+      arbitraryInitialPeriod(initialPeriod),
+      arbitraryRecordTypeChar(apiCompatibleOnly),
+      arbitraryRecNum(size),
+      arbitraryVirtualRecordPart(virtual),
     )
   } else {
     return jsv.unit
@@ -220,15 +237,15 @@ function weakRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual = 
 }
 
 
-function strongRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual = SOMETIMES, ambiguous = SOMETIMES, apiCompatibleOnly = false } = {}) {
+function arbitraryStrongRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual = SOMETIMES, ambiguous = SOMETIMES, apiCompatibleOnly = false } = {}) {
   switch (size) {
     case undefined:
       if (ambiguous === ALWAYS) {
-        return strongRecordKey({ size: 6, initialPeriod, virtual, ambiguous, apiCompatibleOnly })
+        return arbitraryStrongRecordKey({ size: 6, initialPeriod, virtual, ambiguous, apiCompatibleOnly })
       } else {
         return jsv.oneof(
-          strongRecordKey({ size: 6, initialPeriod, virtual, ambiguous, apiCompatibleOnly }),
-          strongRecordKey({ size: 7, initialPeriod, virtual, ambiguous, apiCompatibleOnly }),
+          arbitraryStrongRecordKey({ size: 6, initialPeriod, virtual, ambiguous, apiCompatibleOnly }),
+          arbitraryStrongRecordKey({ size: 7, initialPeriod, virtual, ambiguous, apiCompatibleOnly }),
         )
       }
     case 6:
@@ -244,10 +261,10 @@ function strongRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual 
               : [ ip, rtc, rn, cd, vp ].join('')
             )
           },
-          _initialPeriod(initialPeriod),
-          recordTypeChar(apiCompatibleOnly),
-          recNum(size),
-          _virtualRecordPart(virtual),
+          arbitraryInitialPeriod(initialPeriod),
+          arbitraryRecordTypeChar(apiCompatibleOnly),
+          arbitraryRecNum(size),
+          arbitraryVirtualRecordPart(virtual),
         ),
         _1 => _1 !== undefined
       )
@@ -260,10 +277,10 @@ function strongRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual 
             const cd = calcCheckDigit(rn)
             return [ ip, rtc, rn, cd, vp ].join('')
           },
-          _initialPeriod(initialPeriod),
-          recordTypeChar(apiCompatibleOnly),
-          recNum(size),
-          _virtualRecordPart(virtual),
+          arbitraryInitialPeriod(initialPeriod),
+          arbitraryRecordTypeChar(apiCompatibleOnly),
+          arbitraryRecNum(size),
+          arbitraryVirtualRecordPart(virtual),
         )
       }
 
@@ -274,7 +291,7 @@ function strongRecordKey({ size = undefined, initialPeriod = SOMETIMES, virtual 
 }
 
 
-function databaseId({ size = undefined, virtual = SOMETIMES, apiCompatibleOnly = false } = {}) {
+function arbitraryDatabaseId({ size = undefined, virtual = SOMETIMES, apiCompatibleOnly = false } = {}) {
   const virtualRange = (
     virtual === ALWAYS ? [ 1, 0xFFFF ]
     : virtual === NEVER ? [ 0, 0 ]
@@ -296,7 +313,7 @@ function databaseId({ size = undefined, virtual = SOMETIMES, apiCompatibleOnly =
   return _arbitraryFromGenerator(
     jsv.generator.combine(
       jsv.integer(...virtualRange).generator,
-      recordTypeChar(apiCompatibleOnly).generator,
+      arbitraryRecordTypeChar(apiCompatibleOnly).generator,
       jsv.integer(...recNumRange).generator,
       (campusId, recordTypeChar, recNum) => (
         BigInt(campusId).shiftLeft(48)
@@ -309,15 +326,15 @@ function databaseId({ size = undefined, virtual = SOMETIMES, apiCompatibleOnly =
 }
 
 
-function relativeV4ApiUrl({ size = undefined, virtual = SOMETIMES } = {}) {
-  return _joinArbitraries('/', jsv.constant('v4'), _V4_API_RECORD_TYPES, recordNumber({ size, virtual }))
+function arbitraryRelativeV4ApiUrl({ size = undefined, virtual = SOMETIMES } = {}) {
+  return _joinArbitraries('/', jsv.constant('v4'), V4_API_RECORD_TYPES, arbitraryRecordNumber({ size, virtual }))
 }
 
 
-function absoluteV4ApiUrl({ size = undefined, virtual = SOMETIMES, sierraApiHost = undefined, sierraApiPath = undefined } = {}) {
-  const arbitraryHost = sierraApiHost === undefined ? _ARBITRARY_HOST : jsv.constant(sierraApiHost)
-  const arbitraryPath = sierraApiPath === undefined ? _ARBITRARY_PATH : jsv.constant(sierraApiPath)
-  return _joinArbitraries('', jsv.constant('https://'), arbitraryHost, arbitraryPath, relativeV4ApiUrl({ size, virtual }))
+function arbitraryAbsoluteV4ApiUrl({ size = undefined, virtual = SOMETIMES, sierraApiHost = undefined, sierraApiPath = undefined } = {}) {
+  const arbitraryHost = sierraApiHost === undefined ? URI_HOST : jsv.constant(sierraApiHost)
+  const arbitraryPath = sierraApiPath === undefined ? URI_PATH : jsv.constant(sierraApiPath)
+  return _joinArbitraries('', jsv.constant('https://'), arbitraryHost, arbitraryPath, arbitraryRelativeV4ApiUrl({ size, virtual }))
 }
 
 
@@ -329,14 +346,31 @@ module.exports = {
     NEVER,
     SOMETIMES,
     ALWAYS,
-    recordTypeChar,
-    campusCode,
-    recordNumber,
-    weakRecordKey,
-    strongRecordKey,
-    databaseId,
-    relativeV4ApiUrl,
-    absoluteV4ApiUrl,
+
+    COMPLETELY_INVALID_ID,
+
+    DIGIT_CHAR,
+    LOWER_ALPHA_DIGIT_CHAR,
+    CHECK_DIGIT,
+    ALL_RECORD_TYPE_CHAR,
+    API_COMPATIBLE_TYPE_CHAR,
+    V4_API_RECORD_TYPES,
+    CAMPUS_CODE,
+    URI_HOST,
+    URI_PATH,
+
+    initialPeriod: arbitraryInitialPeriod,
+    recordTypeChar: arbitraryRecordTypeChar,
+    recNum: arbitraryRecNum,
+    virtualRecordPart: arbitraryVirtualRecordPart,
+
+    recordNumber: arbitraryRecordNumber,
+    weakRecordKey: arbitraryWeakRecordKey,
+    strongRecordKey: arbitraryStrongRecordKey,
+    databaseId: arbitraryDatabaseId,
+    relativeV4ApiUrl: arbitraryRelativeV4ApiUrl,
+    absoluteV4ApiUrl: arbitraryAbsoluteV4ApiUrl,
+
   }),
 
 }
