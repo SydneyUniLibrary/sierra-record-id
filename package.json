@@ -9,7 +9,7 @@
     "node": ">=8.9.0 <9"
   },
   "dependencies": {
-    "@sydneyunilibrary/sierra-record-check-digit": "github:SydneyUniLibrary/sierra-record-check-digit#v1.0",
+    "@sydneyunilibrary/sierra-record-check-digit": "github:SydneyUniLibrary/sierra-record-check-digit#v1.1",
     "big-integer": "^1.6.25",
     "dotenv": "^4.0.0"
   },
