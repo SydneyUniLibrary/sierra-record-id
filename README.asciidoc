@@ -11,7 +11,7 @@ endif::[]
 
 = sierra-record-id
 
-Makes, parses, converts and validates the various forms of identifying a record in Sierra.
+Makes, parses, converts and validates the various kinds of identifying a record in Sierra.
 
 toc::[]
 
@@ -52,12 +52,11 @@ SIERRA_API_HOST=sierra.library.edu
 
 
 
-== Forms of identifying a record
+== Kinds of records id
 
-`sierra-record-id` uses the following terminology/nomenclature to refer to the different forms of identifying a record
-in Sierra.
+`sierra-record-id` uses the following terminology/nomenclature to refer to the different kinds of record id in Sierra.
 
-More details are on https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Forms-of-record-id[the wiki page].
+More details are on https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Kinds-of-record-id[the wiki page].
 
 [options="header"]
 |===
