@@ -11,7 +11,7 @@ endif::[]
 
 = sierra-record-id
 
-Converts between the various forms of identifying a record in Sierra.
+Makes, parses, converts and validates the various forms of identifying a record in Sierra.
 
 toc::[]
 
@@ -362,6 +362,181 @@ record number `3696836`, or it could be a strong key for the 6 digit record numb
 
 The previous paragraph notwithstanding, if the key for a 6 digit record number has an `x` check digit
 (for example `o100007x`), `detect` will detect it as being strong and not as being ambiguous.
+
+
+
+
+== make
+
+CAUTION: The `make` functions are simple. If you given them garbage, they will produce garbage.
+         It is on you to validate the inputs before you attempt to make records ids from them.
+
+=== make.recordNumber
+
+==== Synopsis
+
+[source,js]
+make.recordNumber({ recNum: String, campusCode: String = undefined }) => String
+
+==== Examples
+
+[source,js]
+----
+const { make } = require('@sydneyunilibrary/sierra-record-id')
+
+make.recordNumber({ recNum: '3696836' }) // => '3696836'
+make.recordNumber({ recNum: '587634', campusCode: 'abcde' }) // => '587634@abcde'
+----
+
+=== make.weakRecordKey
+
+==== Synopsis
+
+[source,js]
+make.weakRecordKey({ recordTypeCode: String, recNum: String, campusCode: String,
+                     initialPeriod: Boolean = false }) => String
+
+==== Examples
+
+[source,js]
+----
+const { make } = require('@sydneyunilibrary/sierra-record-id')
+
+make.weakRecordKey({ recordTypeCode: 'i', recNum: '3696836' })
+// => 'i3696836'
+make.weakRecordKey({ recordTypeCode: 'i', recNum: '3696836', initialPeriod: true })
+// => '.i3696836'
+
+make.weakRecordKey({ recordTypeCode: 'i', recNum: '3696836', campusCode: 'abcde' })
+// => 'i3696836@abcde'
+make.weakRecordKey({ recordTypeCode: 'i', recNum: '3696836', campusCode: 'abcde', initialPeriod: true })
+// => '.i3696836@abcde'
+----
+
+=== make.strongRecordKey
+
+NOTE: `make.strongRecordKey` does not validate that the check digit you give it is correct for the given rec num.
+
+NOTE: `make.strongRecordKey` will actually make a strong record key for virtual records. It does *not* follow Sierra's
+      convention of producing only weak record keys for virtual records.
+
+==== Synopsis
+
+[source,js]
+make.strongRecordKey({ recordTypeCode: String, recNum: String, campusCode: String,
+                       initialPeriod: Boolean = false }) => String
+
+==== Examples
+
+[source,js]
+----
+const { make } = require('@sydneyunilibrary/sierra-record-id')
+
+make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836' })
+// => 'i3696836'
+make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836', initialPeriod: true })
+// => '.i3696836'
+
+make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836', campusCode: 'abcde' })
+// => 'i3696836@abcde'
+make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836', campusCode: 'abcde', initialPeriod: true })
+// => '.i3696836@abcde'
+----
+
+=== make.databaseId
+
+NOTE: When using `make.databaseId` with virtual records you need to give it the campus id and not the campus code.
+      It will not convert a campus code into a campus id for you.
+
+==== Synopsis
+
+[source,js]
+make.databaseId({ recordTypeCode: String, recNum: String, campusId: Number = 0 }) => String
+
+==== Examples
+
+[source,js]
+----
+const { make } = require('@sydneyunilibrary/sierra-record-id')
+
+make.databaseId({ recordTypeCode: 'a', recNum: '1687568' })
+// => '416613515280'
+make.databaseId({ recordTypeCode: 'b', recNum: '2082103', campusId: 62 })
+// => '17451869464937783'
+----
+
+=== make.relativeV4ApiUrl
+
+NOTE: You need to give `make.relativeV4ApiUrl` an api record type and not a record type code.
+      The `convertRecordTypeCodeToApiRecordType` function can help you if you have a record type code.
+
+==== Synopsis
+
+[source,js]
+make.relativeV4ApiUrl({ apiRecordType: String, recNum: String, campusCode: String }) => String
+
+==== Examples
+
+[source,js]
+----
+const { make } = require('@sydneyunilibrary/sierra-record-id')
+
+make.relativeV4ApiUrl({ apiRecordType: 'patrons', recNum: '3696836' })
+// => 'v4/patrons/3696836'
+make.relativeV4ApiUrl({ apiRecordType: 'bibs', recNum: '3696836', campusCode: 'abcde' })
+// => 'v4/bibs/3696836@abcde'
+
+const { convertRecordTypeCodeToApiRecordType } = require('@sydneyunilibrary/sierra-record-id')
+
+make.relativeV4ApiUrl({ apiRecordType: convertRecordTypeCodeToApiRecordType('p'), recNum: '3696836' })
+// => 'v4/patrons/3696836'
+----
+
+=== make.absoluteV4ApiUrl
+
+NOTE: You need to give `make.absoluteV4ApiUrl` an api record type and not a record type code.
+      The `convertRecordTypeCodeToApiRecordType` function can help you if you have a record type code.
+
+NOTE: If you don't give the `apiHost` parameter, `make.absoluteV4ApiUrl` with use `SIERRA_API_HOST` in your
+      process's environment.
+
+NOTE: If you don't give the `apiPath` parameter, `make.absoluteV4ApiUrl` with use `SIERRA_API_PATH` in your process's
+      environment variable. If your process's environment doesn't define `SIERRA_API_PATH`, `make.absoluteV4ApiUrl`
+      falls back to `/iii/sierra-api/`.
+
+==== Synopsis
+
+[source,js]
+make.absoluteV4ApiUrl({ apiRecordType: String, recNum: String, campusCode: String,
+                        apiHost: String, apiPath: String }) => String
+
+==== Examples
+
+[source,js]
+----
+const { make } = require('@sydneyunilibrary/sierra-record-id')
+
+make.absoluteV4ApiUrl({ apiRecordType: 'patrons', recNum: '3696836',
+                        apiHost: 'some.library', apiPath: '/test/beta-api/' })
+// => 'https://some.library/test/beta-api/v4/patrons/3696836'
+make.absoluteV4ApiUrl({ apiRecordType: 'patrons', recNum: '3696836', campusCode: 'abcde'
+                        apiHost: 'some.library', apiPath: '/test/beta-api/' })
+// => 'https://some.library/test/beta-api/v4/patrons/3696836@abcde'
+
+// Assuming process.env['SIERRA_API_HOST'] === 'library.uni.edu' and process.env['SIERRA_API_PATH'] === undefined
+make.absoluteV4ApiUrl({ apiRecordType: 'patrons', recNum: '3696836' })
+// => 'https://library.uni.edu/iii/sierra-api/v4/patrons/3696836'
+
+// Assuming process.env['SIERRA_API_HOST'] === 'library.uni.edu' and process.env['SIERRA_API_PATH'] === '/blah/'
+make.absoluteV4ApiUrl({ apiRecordType: 'patrons', recNum: '3696836' })
+// => 'https://library.uni.edu/blah/v4/patrons/3696836'
+
+const { convertRecordTypeCodeToApiRecordType } = require('@sydneyunilibrary/sierra-record-id')
+
+// Assuming process.env['SIERRA_API_HOST'] === 'library.uni.edu' and process.env['SIERRA_API_PATH'] === undefined
+make.relativeV4ApiUrl({ apiRecordType: convertRecordTypeCodeToApiRecordType('p'), recNum: '3696836' })
+// => 'https://library.uni.edu/iii/sierra-api/v4/patrons/3696836'
+----
 
 
 

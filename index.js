@@ -20,13 +20,10 @@
 
 require('dotenv').load()
 
-const covertModule = require('./convert')
-const detectModule = require('./detect')
 
-
-module.exports = {
-  convert: covertModule.convert,
-  detect: detectModule.detect,
-  detectRecordKeyStrength: detectModule.detectRecordKeyStrength,
-  RecordIdForms: detectModule.RecordIdForms,
-}
+module.exports = Object.assign(
+  {},
+  require('./convert'),
+  require('./detect'),
+  require('./make'),
+)
