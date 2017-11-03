@@ -275,7 +275,7 @@ describe('make', function () {
         const absoluteV4ApiUrl = make.absoluteV4ApiUrl({ apiHost, apiPath, apiRecordType, recNum })
         expect(absoluteV4ApiUrl).to.be.a('string')
         expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
-        expect(absoluteV4ApiUrl).to.equal(`https://${apiHost}/${apiPath}/v4/${apiRecordType}/${recNum}`)
+        expect(absoluteV4ApiUrl).to.equal(`https://${apiHost}${apiPath}v4/${apiRecordType}/${recNum}`)
       }
     )
 
@@ -291,7 +291,7 @@ describe('make', function () {
         const absoluteV4ApiUrl = make.absoluteV4ApiUrl({ apiHost, apiPath, apiRecordType, recNum, campusCode })
         expect(absoluteV4ApiUrl).to.be.a('string')
         expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}@[a-z0-9]{1,5}$/)
-        expect(absoluteV4ApiUrl).to.equal(`https://${apiHost}/${apiPath}/v4/${apiRecordType}/${recNum}@${campusCode}`)
+        expect(absoluteV4ApiUrl).to.equal(`https://${apiHost}${apiPath}v4/${apiRecordType}/${recNum}@${campusCode}`)
       }
     )
 

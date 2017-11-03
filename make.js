@@ -19,7 +19,6 @@
 
 
 const BigInt = require('big-integer')
-const { convertRecordTypeCodeToApiRecordType } = require('./convert')
 
 
 
@@ -75,9 +74,9 @@ function makeAbsoluteV4ApiUrl({ apiRecordType, recNum, campusCode, apiHost, apiP
   //noinspection AssignmentToFunctionParameterJS
   apiPath = apiPath || process.env['SIERRA_API_PATH'] || '/iii/sierra-api/'
   if (campusCode) {
-    return `https://${apiHost}/${apiPath}/v4/${ apiRecordType }/${recNum}@${campusCode}`
+    return `https://${apiHost}${apiPath}v4/${ apiRecordType }/${recNum}@${campusCode}`
   } else {
-    return `https://${apiHost}/${apiPath}/v4/${ apiRecordType }/${recNum}`
+    return `https://${apiHost}${apiPath}v4/${ apiRecordType }/${recNum}`
   }
 }
 
