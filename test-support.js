@@ -157,7 +157,7 @@ const API_PATH = (
 )
 
 
-function arbitraryInitialPeriod(when) {
+function arbitraryInitialPeriod(when = SOMETIMES) {
   switch (when) {
     case ALWAYS:
       return jsv.constant('.')
