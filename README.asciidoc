@@ -61,7 +61,7 @@ More details are on https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Fo
 
 [options="header"]
 |===
-| Term                | `RecordIdForms`       | Example            | Virtual record example
+| Term                | `RecordIdKind`        | Example            | Virtual record example
 | Record number       | `RECORD_NUMBER`       | `3696836`          | `587634@abcde`
 | Weak record key     | `WEAK_RECORD_KEY`     | `i3696836`         | `i587634@abcde`
 | Strong record key   | `STRONG_RECORD_KEY`   | `i36968365`        | `i5876345@abcde`
@@ -73,8 +73,8 @@ More details are on https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Fo
 | `https://sierra.library.edu/iii/sierra-api/v4/items/587634@abcde`
 |===
 
-There is an additional `RecordIdForms` not mention in the table above, which is `AMBIGUOUS_RECORD_KEY`.
-`detect` returns it cannot determine if a record key is weak or strong.
+There is an additional `RecordIdKind` not mention in the table above, which is `AMBIGUOUS_RECORD_KEY`.
+`detect` returns `AMBIGUOUS_RECORD_KEY` if it cannot determine if a record key is weak or strong.
 
 
 
@@ -91,8 +91,8 @@ CAUTION: You cannot use `convert` when converting to or from a database id for a
 ----
 convert({
     id: Number | String,
-    to: a symbol in RecordIdForms,
-    from: a symbol in RecordIdForms = undefined,
+    to: a symbol in RecordIdKind,
+    from: a symbol in RecordIdKind = undefined,
     recordTypeCode: String = undefined,
     initialPeriod: Boolean = false,
     strongKeysForVirtualRecords: Boolean = false,
@@ -105,36 +105,36 @@ TIP: Any combination of from and to is possible, not just the ones demonstrated 
 
 [source,js]
 ----
-const { convert, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
+const { convert, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
 
-convert({ id: 558315, to: RecordIdForms.WEAK_RECORD_KEY, recordTypeCode: 'o' })
+convert({ id: 558315, to: RecordIdKind.WEAK_RECORD_KEY, recordTypeCode: 'o' })
 // => 'o558315'
 
-convert({ id: '558315', to: RecordIdForms.WEAK_RECORD_KEY, recordTypeCode: 'o' })
+convert({ id: '558315', to: RecordIdKind.WEAK_RECORD_KEY, recordTypeCode: 'o' })
 // => 'o558315'
 
-convert({ id: '558315', to: RecordIdForms.WEAK_RECORD_KEY, recordTypeCode: 'o', initialPeriod: true })
+convert({ id: '558315', to: RecordIdKind.WEAK_RECORD_KEY, recordTypeCode: 'o', initialPeriod: true })
 // => '.o558315'
 
-convert({ id: 'o558315', to: RecordIdForms.RECORD_NUMBER })
+convert({ id: 'o558315', to: RecordIdKind.RECORD_NUMBER })
 // => '558315'
 
-convert({ id: 'o558315', to: RecordIdForms.STRONG_RECORD_KEY })
+convert({ id: 'o558315', to: RecordIdKind.STRONG_RECORD_KEY })
 // => 'o5583159'
 
-convert({ id: '.o558315', to: RecordIdForms.STRONG_RECORD_KEY })
+convert({ id: '.o558315', to: RecordIdKind.STRONG_RECORD_KEY })
 // => 'o5583159'
 
-convert({ id: 'o558315', to: RecordIdForms.STRONG_RECORD_KEY, initialPeriod: true })
+convert({ id: 'o558315', to: RecordIdKind.STRONG_RECORD_KEY, initialPeriod: true })
 // => '.o5583159'
 
-convert({ id: 'o558315', to: RecordIdForms.DATABASE_ID })
+convert({ id: 'o558315', to: RecordIdKind.DATABASE_ID })
 // => '476741928171'
 
-convert({ id: '476741928171', to: RecordIdForms.RELATIVE_V4_API_URL })
+convert({ id: '476741928171', to: RecordIdKind.RELATIVE_V4_API_URL })
 // => 'v4/orders/558315'
 
-convert({ id: '476741928171', to: RecordIdForms.ABSOLUTE_V4_API_URL })
+convert({ id: '476741928171', to: RecordIdKind.ABSOLUTE_V4_API_URL })
 // => 'https://sierra.library.usyd.edu.au/iii/sierra-api/v4/orders/558315'
 ----
 
@@ -145,15 +145,15 @@ CAUTION: Records that have 7 digits are ambiguous. So you have to give the `from
 
 [source,js]
 ----
-const { convert, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
+const { convert, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
 
-convert({ id: 'b3384639', from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
+convert({ id: 'b3384639', from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.DATABASE_ID })
 // => '420910179640'  Because record num is 3384632
 
-convert({ id: 'b3384639', from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
+convert({ id: 'b3384639', from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.DATABASE_ID })
 // => '420907133471'  Becasue record num is 338463 and 9 is check digit.
 
-convert({ id: 'b3384639', to: RecordIdForms.DATABASE_ID })
+convert({ id: 'b3384639', to: RecordIdKind.DATABASE_ID })
 // => throws an error
 ----
 
@@ -161,13 +161,13 @@ convert({ id: 'b3384639', to: RecordIdForms.DATABASE_ID })
 
 [source,js]
 ----
-convert({ id: 'i100993', to: RecordIdForms.STRONG_RECORD_KEY)
+convert({ id: 'i100993', to: RecordIdKind.STRONG_RECORD_KEY)
 // => 'i100993x' A strong record key, as expected.
 
-convert({ id: 'i100993@fhill', to: RecordIdForms.STRONG_RECORD_KEY)
+convert({ id: 'i100993@fhill', to: RecordIdKind.STRONG_RECORD_KEY)
 // => 'i100993@fhill' !!!! A weak record key, even though we asked for a strong record key !!!!
 
-convert({ id: 'i100993@fhill', to: RecordIdForms.STRONG_RECORD_KEY, strongKeysForVirtualRecords: true)
+convert({ id: 'i100993@fhill', to: RecordIdKind.STRONG_RECORD_KEY, strongKeysForVirtualRecords: true)
 // => 'i100993x@fhill' Only now it is strong.
 ----
 
@@ -176,10 +176,10 @@ See the `strongKeysForVirtualRecords` parameter for an explanation.
 
 === Parameters
 
-CAUTION: You cannot give `RecordIdForms.AMBIGUOUS_RECORD_KEY` as either the `from` or `to` options.
+CAUTION: You cannot give `RecordIdKind.AMBIGUOUS_RECORD_KEY` as either the `from` or `to` options.
          You must specify if the key is strong or weak.
 
-CAUTION: If you give a `from` parameter but then give `convert` a record id of a different form, the result of `convert`
+CAUTION: If you give a `from` parameter but then give `convert` a record id of a different kind, the result of `convert`
          is not defined.
 
 TIP: If you know what you are converting from, specify it in the `from` parameter. `convert` will then not have to call
@@ -195,12 +195,12 @@ TIP: If you know what you are converting from, specify it in the `from` paramete
 
 | to
 | Yes
-| Specify what is the form of the record id you want to convert to. Use one of the `RecordIdForms` symbols.
+| Specify kind of the record id you want to convert to. Use one of the `RecordIdKind` symbols.
 
 | from
 | No
-| Specify what is the form of the record id you already have. Use one of the `RecordIdForms` symbols.
-  If you don't give the `from` parameter, `convert` will use `detect` to try to determine the form of the id you gave it.
+| Specify kind of the record id you already have. Use one of the `RecordIdKind` symbols.
+  If you don't give the `from` parameter, `convert` will use `detect` to try to determine the kind of the id you gave it.
 
 | recordTypeCode
 | Sometimes
@@ -219,9 +219,9 @@ TIP: If you know what you are converting from, specify it in the `from` paramete
   Sierra's own behaviour is to produce weak record keys for virtual records, even in situations where it
   would have produced a strong record key if the record was non-virtual. By default, `convert` will follows this behaviour.
   That is if you don't give the `strongKeysForVirtualRecords` parameter or you give `false` for it, `convert` will
-  produce a weak record key for virtual records even if you give `RecordIdForms.STRONG_RECORD_KEY` for the `to` parameter.
+  produce a weak record key for virtual records even if you give `RecordIdKind.STRONG_RECORD_KEY` for the `to` parameter.
   If you really do want strong record keys for virtual records, you need to give `true` for `strongKeysForVirtualRecords`
-  in addition to giving `RecordIdForms.STRONG_RECORD_KEY` for the `to` parameter.
+  in addition to giving `RecordIdKind.STRONG_RECORD_KEY` for the `to` parameter.
 
 |===
 
@@ -229,10 +229,10 @@ TIP: If you know what you are converting from, specify it in the `from` paramete
 
 `convert` will throw an error (in at least) the following situations.
 
-* You did not give the `from` parameter and `detect` returned `RecordIdForms.AMBIGUOUS_RECORD_KEY` or `undefined`
+* You did not give the `from` parameter and `detect` returned `RecordIdKind.AMBIGUOUS_RECORD_KEY` or `undefined`
   for the id you are trying to convert.
 
-* You gave `RecordIdForms.AMBIGUOUS_RECORD_KEY` as either the `from` or `to` parameters.
+* You gave `RecordIdKind.AMBIGUOUS_RECORD_KEY` as either the `from` or `to` parameters.
 
 * You are converting from a record number, but you haven't given the `recordTypeCode` parameter.
 
@@ -249,7 +249,7 @@ TIP: You must use `convertAsync` when converting to or from a database id for a 
      If you try to use `convert` in this situation, `convert` will throw an error.
 
 `convertAsync` is the same as `convert` except it potentially does the conversion asynchronously. So it returns a Promise
-that will eventually resolve with the id converted into the form you want.
+that will eventually resolve with the kind of record id you want.
 
 In reality, `convertAsync` will do the conversion synchronously except in the case of a database id for a virtual record,
 and will return a Promise that is already resolved.
@@ -265,8 +265,8 @@ using `convert` instead of `convertAsync`. Sorry.)
 ----
 convertAsync({
     id: Number | String,
-    to: a symbol in RecordIdForms,
-    from: a symbol in RecordIdForms = undefined,
+    to: a symbol in RecordIdKind,
+    from: a symbol in RecordIdKind = undefined,
     recordTypeCode: String = undefined,
     initialPeriod: Boolean = false,
     strongKeysForVirtualRecords: Boolean = false,
@@ -278,20 +278,20 @@ convertAsync({
 .Using ECMAScript 2017
 [source, js]
 ----
-const { convertAsync, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
+const { convertAsync, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
 
 async function a() {
-    await convertAsync('1970745744342089', to: RecordIdForms.WEAK_RECORD_KEY) // => 'b572489@hsill'
+    await convertAsync('1970745744342089', to: RecordIdKind.WEAK_RECORD_KEY) // => 'b572489@hsill'
 }
 ----
 
 .Using ECMAScript 2016
 [source, js]
 ----
-const { convertAsync, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
+const { convertAsync, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
 
 function a() {
-    convertAsync('1970745744342089', to: RecordIdForms.WEAK_RECORD_KEY)
+    convertAsync('1970745744342089', to: RecordIdKind.WEAK_RECORD_KEY)
     .then(weakRecordKey => {
         // => 'b572489@hsill'
     })
@@ -328,25 +328,25 @@ TIP: You can detect a database id without having set up `sierra-db-as-promised`.
 === Synopsis
 
 [source,js]
-detect(id: Number | String) => a symbol in RecordIdForms | undefined
+detect(id: Number | String) => a symbol in RecordIdKind | undefined
 
 === Examples
 [source,js]
 ----
-const { detect, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
+const { detect, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
 
 detect(undefined) // => undefined
 detect('') // => undefined
 detect('something random, but see the warning above!') // => undefined
 
-detect(3696836) // => RecordIdForms.RECORD_NUMBER
-detect('3696836') // => RecordIdForms.RECORD_NUMBER
-detect('o369683') // => RecordIdForms.WEAK_RECORD_KEY
-detect('i3696836') // => RecordIdForms.AMBIGUOUS_RECORD_KEY
-detect('i36968367') // => RecordIdForms.STRONG_RECORD_KEY
-detect('450975262916') // => RecordIdForms.DATABASE_ID
-detect('v4/items/3696836') // => RecordIdForms.RELATIVE_V4_API_URL
-detect('https://sierra.library.edu/iii/sierra-api/v4/items/3696836') // => RecordIdForms.ABSOLUTE_V4_API_URL
+detect(3696836) // => RecordIdKind.RECORD_NUMBER
+detect('3696836') // => RecordIdKind.RECORD_NUMBER
+detect('o369683') // => RecordIdKind.WEAK_RECORD_KEY
+detect('i3696836') // => RecordIdKind.AMBIGUOUS_RECORD_KEY
+detect('i36968367') // => RecordIdKind.STRONG_RECORD_KEY
+detect('450975262916') // => RecordIdKind.DATABASE_ID
+detect('v4/items/3696836') // => RecordIdKind.RELATIVE_V4_API_URL
+detect('https://sierra.library.edu/iii/sierra-api/v4/items/3696836') // => RecordIdKind.ABSOLUTE_V4_API_URL
 ----
 
 `detect` correctly detects record keys that have an initial period, for example `.o369683` and `.i36968367`. It also

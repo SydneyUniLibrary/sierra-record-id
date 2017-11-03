@@ -21,7 +21,7 @@
 const BigInt = require('big-integer')
 const { calcCheckDigit } = require('@sydneyunilibrary/sierra-record-check-digit')
 
-const { detect, RecordIdForms } = require('./detect')
+const { detect, RecordIdKind } = require('./detect')
 
 
 
@@ -65,23 +65,23 @@ function convertApiRecordTypeToRecordTypeCode(apiRecordType) {
 function convert({ id, to, from, recordTypeCode, initialPeriod = false, strongKeysForVirtualRecords = false, context = {} }) {
   const detectedFrom = from || detect(id)
   if (!detectedFrom) {
-    throw new Error(`Cannot detect the form of record id: ${id}`)
+    throw new Error(`Cannot detect the kind of record id: ${id}`)
   }
-  if (detectedFrom === to && to !== RecordIdForms.WEAK_RECORD_KEY && to !== RecordIdForms.STRONG_RECORD_KEY) {
+  if (detectedFrom === to && to !== RecordIdKind.WEAK_RECORD_KEY && to !== RecordIdKind.STRONG_RECORD_KEY) {
     return id
   }
   switch (from) {
-    case RecordIdForms.RECORD_NUMBER:
+    case RecordIdKind.RECORD_NUMBER:
       return _convertFromRecordNumber({ id, to, initialPeriod, recordTypeCode, strongKeysForVirtualRecords, context })
-    case RecordIdForms.WEAK_RECORD_KEY:
+    case RecordIdKind.WEAK_RECORD_KEY:
       return _convertFromWeakRecordKey({ id, to, initialPeriod, recordTypeCode, strongKeysForVirtualRecords, context })
-    case RecordIdForms.STRONG_RECORD_KEY:
+    case RecordIdKind.STRONG_RECORD_KEY:
       return _convertFromStrongRecordKey({ id, to, initialPeriod, recordTypeCode, strongKeysForVirtualRecords, context })
-    case RecordIdForms.DATABASE_ID:
+    case RecordIdKind.DATABASE_ID:
       return _convertFromDatabaseId({ id, to, initialPeriod, strongKeysForVirtualRecords, context })
-    case RecordIdForms.RELATIVE_V4_API_URL:
+    case RecordIdKind.RELATIVE_V4_API_URL:
       return _convertFromRelativeV4ApiUrl({ id, to, initialPeriod, strongKeysForVirtualRecords, context })
-    case RecordIdForms.ABSOLUTE_V4_API_URL:
+    case RecordIdKind.ABSOLUTE_V4_API_URL:
       return _convertFromAbsoluteV4ApiUrl({ id, to, initialPeriod, strongKeysForVirtualRecords, context })
   }
   throw new Error(`Cannot convert from ${from.toString()} to ${to.toString()} for record id ${id}`)
@@ -91,17 +91,17 @@ function convert({ id, to, from, recordTypeCode, initialPeriod = false, strongKe
 function _convertFromRecordNumber({ id, to, initialPeriod, recordTypeCode, strongKeysForVirtualRecords, context }) {
   const [ recNum, campusCode ] = id.split('@', 2)
   switch (to) {
-    case RecordIdForms.RECORD_NUMBER:
+    case RecordIdKind.RECORD_NUMBER:
       return id
-    case RecordIdForms.WEAK_RECORD_KEY:
+    case RecordIdKind.WEAK_RECORD_KEY:
       return _convertToWeakRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode })
-    case RecordIdForms.STRONG_RECORD_KEY:
+    case RecordIdKind.STRONG_RECORD_KEY:
       return _convertToStrongRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode, strongKeysForVirtualRecords })
-    case RecordIdForms.DATABASE_ID:
+    case RecordIdKind.DATABASE_ID:
       return _convertToDatabaseId({ recordTypeCode, recNum, campusCode, context })
-    case RecordIdForms.RELATIVE_V4_API_URL:
+    case RecordIdKind.RELATIVE_V4_API_URL:
       return _convertToRelativeV4ApiUrl({ recordTypeCode, recNum, campusCode })
-    case RecordIdForms.ABSOLUTE_V4_API_URL:
+    case RecordIdKind.ABSOLUTE_V4_API_URL:
       return _convertToAbsoluteV4ApiUrl({ recordTypeCode, recNum, campusCode, context })
     default:
       throw new Error(`Cannot convert from record number to ${to.toString()} for record id ${id}`)
@@ -115,18 +115,18 @@ function _convertFromWeakRecordKey({ id, to, initialPeriod, strongKeysForVirtual
   const recNum = match[2]
   const campusCode = match[4] || ''
   switch (to) {
-    case RecordIdForms.RECORD_NUMBER:
+    case RecordIdKind.RECORD_NUMBER:
       return _convertToRecordNumber({ recNum, campusCode })
-    case RecordIdForms.WEAK_RECORD_KEY:
+    case RecordIdKind.WEAK_RECORD_KEY:
       // Have to deal with weak record key -> weak record key so we can strip or add initial period
       return _convertToWeakRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode })
-    case RecordIdForms.STRONG_RECORD_KEY:
+    case RecordIdKind.STRONG_RECORD_KEY:
       return _convertToStrongRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode, strongKeysForVirtualRecords, context })
-    case RecordIdForms.DATABASE_ID:
+    case RecordIdKind.DATABASE_ID:
       return _convertToDatabaseId({ recordTypeCode, recNum, campusCode, context })
-    case RecordIdForms.RELATIVE_V4_API_URL:
+    case RecordIdKind.RELATIVE_V4_API_URL:
       return _convertToRelativeV4ApiUrl({ recordTypeCode, recNum, campusCode, context })
-    case RecordIdForms.ABSOLUTE_V4_API_URL:
+    case RecordIdKind.ABSOLUTE_V4_API_URL:
       return _convertToAbsoluteV4ApiUrl({ recordTypeCode, recNum, campusCode, context })
     default:
       throw new Error(`Cannot convert from weak record key to ${to.toString()} for record id ${id}`)
@@ -140,17 +140,17 @@ function _convertFromStrongRecordKey({ id, to, initialPeriod, strongKeysForVirtu
   const recNum = match[2]
   const campusCode = match[4] || ''
   switch (to) {
-    case RecordIdForms.RECORD_NUMBER:
+    case RecordIdKind.RECORD_NUMBER:
       return _convertToRecordNumber({ recNum, campusCode })
-    case RecordIdForms.WEAK_RECORD_KEY:
+    case RecordIdKind.WEAK_RECORD_KEY:
       return _convertToWeakRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode })
-    case RecordIdForms.STRONG_RECORD_KEY:
+    case RecordIdKind.STRONG_RECORD_KEY:
       return _convertToStrongRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode, strongKeysForVirtualRecords })
-    case RecordIdForms.DATABASE_ID:
+    case RecordIdKind.DATABASE_ID:
       return _convertToDatabaseId({ recordTypeCode, recNum, campusCode, context })
-    case RecordIdForms.RELATIVE_V4_API_URL:
+    case RecordIdKind.RELATIVE_V4_API_URL:
       return _convertToRelativeV4ApiUrl({ recordTypeCode, recNum, campusCode })
-    case RecordIdForms.ABSOLUTE_V4_API_URL:
+    case RecordIdKind.ABSOLUTE_V4_API_URL:
       return _convertToAbsoluteV4ApiUrl({ recordTypeCode, recNum, campusCode, context })
     default:
       throw new Error(`Cannot convert from strong record key to ${to.toString()} for record id ${id}`)
@@ -168,15 +168,15 @@ function _convertFromDatabaseId({ id, to, initialPeriod, strongKeysForVirtualRec
   const recNum = bigIntId.and(0xFFFFFFFF).toString()
   const campusCode = ''
   switch (to) {
-    case RecordIdForms.RECORD_NUMBER:
+    case RecordIdKind.RECORD_NUMBER:
       return _convertToRecordNumber({ recNum, campusCode })
-    case RecordIdForms.WEAK_RECORD_KEY:
+    case RecordIdKind.WEAK_RECORD_KEY:
       return _convertToWeakRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode })
-    case RecordIdForms.STRONG_RECORD_KEY:
+    case RecordIdKind.STRONG_RECORD_KEY:
       return _convertToStrongRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode, strongKeysForVirtualRecords })
-    case RecordIdForms.RELATIVE_V4_API_URL:
+    case RecordIdKind.RELATIVE_V4_API_URL:
       return _convertToRelativeV4ApiUrl({ recordTypeCode, recNum, campusCode })
-    case RecordIdForms.ABSOLUTE_V4_API_URL:
+    case RecordIdKind.ABSOLUTE_V4_API_URL:
       return _convertToAbsoluteV4ApiUrl({ recordTypeCode, recNum, campusCode, context })
     default:
       throw new Error(`Cannot convert from database id to ${to.toString()} for record id ${id}`)
@@ -189,15 +189,15 @@ function _convertFromRelativeV4ApiUrl({ id, to, initialPeriod, strongKeysForVirt
   const [ recNum, campusCode ] = recordNumber.split('@', 2)
   const recordTypeCode = convertApiRecordTypeToRecordTypeCode(apiRecordType)
   switch (to) {
-    case RecordIdForms.RECORD_NUMBER:
+    case RecordIdKind.RECORD_NUMBER:
       return _convertToRecordNumber({ recNum, campusCode })
-    case RecordIdForms.WEAK_RECORD_KEY:
+    case RecordIdKind.WEAK_RECORD_KEY:
       return _convertToWeakRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode })
-    case RecordIdForms.STRONG_RECORD_KEY:
+    case RecordIdKind.STRONG_RECORD_KEY:
       return _convertToStrongRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode, strongKeysForVirtualRecords })
-    case RecordIdForms.DATABASE_ID:
+    case RecordIdKind.DATABASE_ID:
       return _convertToDatabaseId({ recordTypeCode, recNum, campusCode, context })
-    case RecordIdForms.ABSOLUTE_V4_API_URL:
+    case RecordIdKind.ABSOLUTE_V4_API_URL:
       return _convertToAbsoluteV4ApiUrl({ recordTypeCode, recNum, campusCode, context })
     default:
       throw new Error(`Cannot convert from relative v4 API URL to ${to.toString()} for record id ${id}`)
@@ -215,15 +215,15 @@ function _convertFromAbsoluteV4ApiUrl({ id, to, initialPeriod, strongKeysForVirt
   const campusCode = match[4] || ''
   const recordTypeCode = convertApiRecordTypeToRecordTypeCode(apiRecordType)
   switch (to) {
-    case RecordIdForms.RECORD_NUMBER:
+    case RecordIdKind.RECORD_NUMBER:
       return _convertToRecordNumber({ recNum, campusCode })
-    case RecordIdForms.WEAK_RECORD_KEY:
+    case RecordIdKind.WEAK_RECORD_KEY:
       return _convertToWeakRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode })
-    case RecordIdForms.STRONG_RECORD_KEY:
+    case RecordIdKind.STRONG_RECORD_KEY:
       return _convertToStrongRecordKey({ initialPeriod, recordTypeCode, recNum, campusCode, strongKeysForVirtualRecords })
-    case RecordIdForms.DATABASE_ID:
+    case RecordIdKind.DATABASE_ID:
       return _convertToDatabaseId({ recordTypeCode, recNum, campusCode, context })
-    case RecordIdForms.RELATIVE_V4_API_URL:
+    case RecordIdKind.RELATIVE_V4_API_URL:
       return _convertToRelativeV4ApiUrl({ recordTypeCode, recNum, campusCode })
     default:
       throw new Error(`Cannot convert from absolute v4 API URL to ${to.toString()} for record id ${id}`)

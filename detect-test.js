@@ -22,7 +22,7 @@ const chai = require('chai')
 const expect = chai.expect
 const jsv = require('jsverify')
 
-const { detect, RecordIdForms } = require('.')
+const { detect, RecordIdKind } = require('.')
 const { arbitrary, chaiProperty } = require('./test-support')
 
 
@@ -31,49 +31,49 @@ describe('detect', function () {
   chaiProperty(
     'detects record numbers',
     arbitrary.recordNumber(),
-    id => expect(detect(id)).to.equal(RecordIdForms.RECORD_NUMBER)
+    id => expect(detect(id)).to.equal(RecordIdKind.RECORD_NUMBER)
   )
 
   chaiProperty(
     'detects weak record keys',
     arbitrary.weakRecordKey({ ambiguous: arbitrary.NEVER }),
-    id => expect(detect(id)).to.equal(RecordIdForms.WEAK_RECORD_KEY)
+    id => expect(detect(id)).to.equal(RecordIdKind.WEAK_RECORD_KEY)
   )
 
   chaiProperty(
     'detects strong record keys',
     arbitrary.strongRecordKey({ ambiguous: arbitrary.NEVER }),
-    id => expect(detect(id)).to.equal(RecordIdForms.STRONG_RECORD_KEY)
+    id => expect(detect(id)).to.equal(RecordIdKind.STRONG_RECORD_KEY)
   )
 
   chaiProperty(
     'detects ambiguous weak record keys',
     arbitrary.weakRecordKey({ ambiguous: arbitrary.ALWAYS }),
-    id => expect(detect(id)).to.equal(RecordIdForms.AMBIGUOUS_RECORD_KEY)
+    id => expect(detect(id)).to.equal(RecordIdKind.AMBIGUOUS_RECORD_KEY)
   )
 
   chaiProperty(
     'detects ambiguous strong record keys',
     arbitrary.strongRecordKey({ ambiguous: arbitrary.ALWAYS }),
-    id => expect(detect(id)).to.equal(RecordIdForms.AMBIGUOUS_RECORD_KEY)
+    id => expect(detect(id)).to.equal(RecordIdKind.AMBIGUOUS_RECORD_KEY)
   )
 
   chaiProperty(
     'detects database ids',
     arbitrary.databaseId(),
-    id => expect(detect(id)).to.equal(RecordIdForms.DATABASE_ID)
+    id => expect(detect(id)).to.equal(RecordIdKind.DATABASE_ID)
   )
 
   chaiProperty(
     'detects relative v4 api urls',
     arbitrary.relativeV4ApiUrl(),
-    id => expect(detect(id)).to.equal(RecordIdForms.RELATIVE_V4_API_URL)
+    id => expect(detect(id)).to.equal(RecordIdKind.RELATIVE_V4_API_URL)
   )
 
   chaiProperty(
     'detects absolute v4 api urls',
     arbitrary.absoluteV4ApiUrl(),
-    id => expect(detect(id)).to.equal(RecordIdForms.ABSOLUTE_V4_API_URL)
+    id => expect(detect(id)).to.equal(RecordIdKind.ABSOLUTE_V4_API_URL)
   )
 
   describe('copes with invalid record ids', function () {
@@ -83,9 +83,9 @@ describe('detect', function () {
       '',
       "something random, but don't count on it!"
     ]
-    for (const form of invalidRecordIds) {
-      it(`should return undefined when given ${form}`, function () {
-        expect(detect(form)).to.be.undefined
+    for (const id of invalidRecordIds) {
+      it(`should return undefined when given ${id}`, function () {
+        expect(detect(id)).to.be.undefined
       })
     }
   })

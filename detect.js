@@ -18,7 +18,7 @@
 'use strict'
 
 
-const RecordIdForms = Object.freeze({
+const RecordIdKind = Object.freeze({
   RECORD_NUMBER: Symbol('RECORD_NUMBER'),
   WEAK_RECORD_KEY: Symbol('WEAK_RECORD_KEY'),
   STRONG_RECORD_KEY: Symbol('STRONG_RECORD_KEY'),
@@ -38,32 +38,32 @@ const CODE_POINT_PERIOD = '.'.codePointAt(0)
 
 
 function detect(recordIdString) {
-  let form
+  let kind
   if (recordIdString) {
     const trimmedRecordIdString = recordIdString.trim()
     const firstCodePoint = trimmedRecordIdString.codePointAt(0)
     if (firstCodePoint === CODE_POINT_PERIOD) {
-      form = detectRecordKeyStrength(trimmedRecordIdString)
+      kind = detectRecordKeyStrength(trimmedRecordIdString)
     } else if (trimmedRecordIdString.startsWith('https://')) {
-      form = RecordIdForms.ABSOLUTE_V4_API_URL
+      kind = RecordIdKind.ABSOLUTE_V4_API_URL
     } else if (trimmedRecordIdString.startsWith('v4/')) {
-      form = RecordIdForms.RELATIVE_V4_API_URL
+      kind = RecordIdKind.RELATIVE_V4_API_URL
     } else if (firstCodePoint >= CODE_POINT_LOWER_A && firstCodePoint <= CODE_POINT_LOWER_Z) {
-      form = detectRecordKeyStrength(trimmedRecordIdString)
+      kind = detectRecordKeyStrength(trimmedRecordIdString)
     } else if (firstCodePoint >= CODE_POINT_0 && firstCodePoint <= CODE_POINT_9) {
       if (/^\d{12,}/.test(trimmedRecordIdString)) {
-        form = RecordIdForms.DATABASE_ID
+        kind = RecordIdKind.DATABASE_ID
       } else {
-        form = RecordIdForms.RECORD_NUMBER
+        kind = RecordIdKind.RECORD_NUMBER
       }
     }
   }
-  return form
+  return kind
 }
 
 
 function detectRecordKeyStrength(recordIdString) {
-  let form
+  let kind
   const recordIdStringLength = recordIdString.length
   const firstRecordIdStringCodePoint = recordIdString.codePointAt(0)
   const indexOfFirstAt = recordIdString.indexOf('@')
@@ -73,20 +73,20 @@ function detectRecordKeyStrength(recordIdString) {
   const recordNumLength = recordNum.length
   const lastRecordNumCodePoint = recordNum.codePointAt(recordNumLength - 1)
   if (lastRecordNumCodePoint === CODE_POINT_LOWER_X) {
-    form = RecordIdForms.STRONG_RECORD_KEY
+    kind = RecordIdKind.STRONG_RECORD_KEY
   } else if (recordNumLength === 6) {
-    form = RecordIdForms.WEAK_RECORD_KEY
+    kind = RecordIdKind.WEAK_RECORD_KEY
   } else if (recordNumLength === 7) {
-    form = RecordIdForms.AMBIGUOUS_RECORD_KEY
+    kind = RecordIdKind.AMBIGUOUS_RECORD_KEY
   } else if (recordNumLength === 8) {
-    form = RecordIdForms.STRONG_RECORD_KEY
+    kind = RecordIdKind.STRONG_RECORD_KEY
   }
-  return form
+  return kind
 }
 
 
 module.exports = {
   detect,
   detectRecordKeyStrength,
-  RecordIdForms,
+  RecordIdKind,
 }

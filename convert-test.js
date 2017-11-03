@@ -24,7 +24,7 @@ const jsv = require('jsverify')
 const { URL } = require('url')
 const { calcCheckDigit } = require('@sydneyunilibrary/sierra-record-check-digit')
 
-const { convert, RecordIdForms } = require('.')
+const { convert, RecordIdKind } = require('.')
 const { convertRecordTypeCodeToApiRecordType, convertApiRecordTypeToRecordTypeCode } = require('./convert')
 const { arbitrary, chaiProperty } = require('./test-support')
 
@@ -50,7 +50,7 @@ describe('convert', function () {
       'to record number',
       arbitrary.recordNumber(),
       id => {
-        const recordNumber = convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.RECORD_NUMBER })
+        const recordNumber = convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.RECORD_NUMBER })
         expect(recordNumber).to.be.a('string')
         expect(recordNumber).to.match(/^[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         expect(recordNumber).to.equal(id)
@@ -63,7 +63,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode(),
       ( id, recordTypeCode ) => {
         const weakRecordKey =
-                convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.WEAK_RECORD_KEY, recordTypeCode })
+                convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.WEAK_RECORD_KEY, recordTypeCode })
         expect(weakRecordKey).to.be.a('string')
         expect(weakRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recNum, virtPart } = unpack(id)
@@ -77,7 +77,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode(),
       ( id, recordTypeCode ) => {
         const weakRecordKey =
-                convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.WEAK_RECORD_KEY, recordTypeCode,
+                convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.WEAK_RECORD_KEY, recordTypeCode,
                           initialPeriod: true })
         expect(weakRecordKey).to.be.a('string')
         expect(weakRecordKey).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
@@ -92,7 +92,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode(),
       ( id, recordTypeCode ) => {
         const strongRecordKey =
-                convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.STRONG_RECORD_KEY, recordTypeCode })
+                convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.STRONG_RECORD_KEY, recordTypeCode })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x]$/)
         const expectedCheckDigit = calcCheckDigit(id)
@@ -106,7 +106,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode(),
       ( id, recordTypeCode ) => {
         const strongRecordKey =
-                convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.STRONG_RECORD_KEY, recordTypeCode })
+                convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.STRONG_RECORD_KEY, recordTypeCode })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}@[a-z0-9]{1,5}$/)
         const { recNum, virtPart } = unpack(id)
@@ -120,7 +120,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode(),
       ( id, recordTypeCode ) => {
         const strongRecordKey =
-                convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.STRONG_RECORD_KEY, recordTypeCode,
+                convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.STRONG_RECORD_KEY, recordTypeCode,
                           strongKeysForVirtualRecords: true })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}[0-9x]@[a-z0-9]{1,5}$/)
@@ -136,7 +136,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode(),
       ( id, recordTypeCode ) => {
         const strongRecordKey =
-                 convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.STRONG_RECORD_KEY, recordTypeCode,
+                 convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.STRONG_RECORD_KEY, recordTypeCode,
                            initialPeriod: true })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}[0-9x]$/)
@@ -151,7 +151,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode(),
       ( id, recordTypeCode ) => {
         const databaseId =
-          convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.DATABASE_ID, recordTypeCode })
+          convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.DATABASE_ID, recordTypeCode })
         expect(databaseId).to.be.a('string')
         expect(databaseId).to.match(/^\d+$/)
         const { recNum } = unpack(id)
@@ -168,7 +168,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode(),
       ( id, recordTypeCode ) => {
         const fn =
-          () => convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.DATABASE_ID, recordTypeCode })
+          () => convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.DATABASE_ID, recordTypeCode })
         expect(fn).to.throw('Cannot use convert to convert to database ids for virtual records. Must use convertAsync instead')
       }
     )
@@ -179,7 +179,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode({ apiCompatibleOnly: true }),
       ( id, recordTypeCode ) => {
         const relativeV4ApiUrl =
-                convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.RELATIVE_V4_API_URL, recordTypeCode })
+                convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.RELATIVE_V4_API_URL, recordTypeCode })
         expect(relativeV4ApiUrl).to.be.a('string')
         expect(relativeV4ApiUrl).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recNum, virtPart } = unpack(id)
@@ -194,7 +194,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode({ apiCompatibleOnly: true }),
       ( id, recordTypeCode ) => {
         const absoluteV4ApiUrl =
-                convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.ABSOLUTE_V4_API_URL, recordTypeCode,
+                convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.ABSOLUTE_V4_API_URL, recordTypeCode,
                           context: { sierraApiHost: 'some.library' } })
         expect(absoluteV4ApiUrl).to.be.a('string')
         expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
@@ -210,7 +210,7 @@ describe('convert', function () {
       arbitrary.recordTypeCode({ apiCompatibleOnly: true }),
       ( id, recordTypeCode ) => {
         const fn =
-          () => convert({ id, from: RecordIdForms.RECORD_NUMBER, to: RecordIdForms.ABSOLUTE_V4_API_URL, recordTypeCode })
+          () => convert({ id, from: RecordIdKind.RECORD_NUMBER, to: RecordIdKind.ABSOLUTE_V4_API_URL, recordTypeCode })
         expect(fn).to.throw(/SIERRA_API_HOST must be set/i)
       }
     )
@@ -239,7 +239,7 @@ describe('convert', function () {
       arbitrary.weakRecordKey(),
       id => {
         const recordNumber =
-          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.RECORD_NUMBER })
+          convert({ id, from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.RECORD_NUMBER })
         expect(recordNumber).to.be.a('string')
         expect(recordNumber).to.match(/^[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recNum, virtPart } = unpack(id)
@@ -252,7 +252,7 @@ describe('convert', function () {
       arbitrary.weakRecordKey(),
       id => {
         const recordNumber =
-          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.WEAK_RECORD_KEY })
+          convert({ id, from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.WEAK_RECORD_KEY })
         expect(recordNumber).to.be.a('string')
         expect(recordNumber).to.match(/^[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -265,7 +265,7 @@ describe('convert', function () {
       arbitrary.weakRecordKey(),
       id => {
         const recordNumber =
-          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.WEAK_RECORD_KEY, initialPeriod: true })
+          convert({ id, from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.WEAK_RECORD_KEY, initialPeriod: true })
         expect(recordNumber).to.be.a('string')
         expect(recordNumber).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -278,7 +278,7 @@ describe('convert', function () {
       arbitrary.weakRecordKey({ virtual: NEVER }),
       id => {
         const strongRecordKey =
-          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.STRONG_RECORD_KEY })
+          convert({ id, from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.STRONG_RECORD_KEY })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -292,7 +292,7 @@ describe('convert', function () {
       arbitrary.weakRecordKey({ virtual: NEVER }),
       id => {
         const databaseId =
-          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
+          convert({ id, from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.DATABASE_ID })
         expect(databaseId).to.be.a('string')
         expect(databaseId).to.match(/^\d+$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -308,7 +308,7 @@ describe('convert', function () {
       arbitrary.weakRecordKey({ virtual: ALWAYS }),
       id => {
         const fn =
-          () => convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
+          () => convert({ id, from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.DATABASE_ID })
         expect(fn).to.throw('Cannot use convert to convert to database ids for virtual records. Must use convertAsync instead')
       }
     )
@@ -318,7 +318,7 @@ describe('convert', function () {
       arbitrary.weakRecordKey({ apiCompatibleOnly: true }),
       id => {
         const relativeV4ApiUrl =
-          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.RELATIVE_V4_API_URL })
+          convert({ id, from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.RELATIVE_V4_API_URL })
         expect(relativeV4ApiUrl).to.be.a('string')
         expect(relativeV4ApiUrl).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -332,7 +332,7 @@ describe('convert', function () {
       arbitrary.weakRecordKey({ apiCompatibleOnly: true }),
       id => {
         const absoluteV4ApiUrl =
-          convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.ABSOLUTE_V4_API_URL,
+          convert({ id, from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.ABSOLUTE_V4_API_URL,
             context: { sierraApiHost: 'some.library' } })
         expect(absoluteV4ApiUrl).to.be.a('string')
         expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
@@ -347,7 +347,7 @@ describe('convert', function () {
       arbitrary.weakRecordKey({ apiCompatibleOnly: true }),
       id => {
         const fn =
-          () => convert({ id, from: RecordIdForms.WEAK_RECORD_KEY, to: RecordIdForms.ABSOLUTE_V4_API_URL })
+          () => convert({ id, from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.ABSOLUTE_V4_API_URL })
         expect(fn).to.throw(/SIERRA_API_HOST must be set/i)
       }
     )
@@ -377,7 +377,7 @@ describe('convert', function () {
       arbitrary.strongRecordKey(),
       id => {
         const recordNumber =
-          convert({ id, from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.RECORD_NUMBER })
+          convert({ id, from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.RECORD_NUMBER })
         expect(recordNumber).to.be.a('string')
         expect(recordNumber).to.match(/^[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recNum, virtPart } = unpack(id)
@@ -390,7 +390,7 @@ describe('convert', function () {
       arbitrary.strongRecordKey({}),
       id => {
         const recordNumber =
-          convert({ id, from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.WEAK_RECORD_KEY })
+          convert({ id, from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.WEAK_RECORD_KEY })
         expect(recordNumber).to.be.a('string')
         expect(recordNumber).to.match(/^[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -403,7 +403,7 @@ describe('convert', function () {
       arbitrary.strongRecordKey({ virtual: NEVER }),
       id => {
         const strongRecordKey =
-          convert({ id, from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.STRONG_RECORD_KEY })
+          convert({ id, from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.STRONG_RECORD_KEY })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -417,7 +417,7 @@ describe('convert', function () {
       arbitrary.strongRecordKey({ virtual: NEVER }),
       id => {
         const strongRecordKey =
-          convert({ id, from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.STRONG_RECORD_KEY, initialPeriod: true })
+          convert({ id, from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.STRONG_RECORD_KEY, initialPeriod: true })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}[0-9x](@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -431,7 +431,7 @@ describe('convert', function () {
       arbitrary.strongRecordKey({ virtual: NEVER }),
       id => {
         const databaseId =
-          convert({ id, from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
+          convert({ id, from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.DATABASE_ID })
         expect(databaseId).to.be.a('string')
         expect(databaseId).to.match(/^\d+$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -447,7 +447,7 @@ describe('convert', function () {
       arbitrary.strongRecordKey({ virtual: ALWAYS }),
       id => {
         const fn =
-          () => convert({ id, from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.DATABASE_ID })
+          () => convert({ id, from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.DATABASE_ID })
         expect(fn).to.throw('Cannot use convert to convert to database ids for virtual records. Must use convertAsync instead')
       }
     )
@@ -457,7 +457,7 @@ describe('convert', function () {
       arbitrary.strongRecordKey({ apiCompatibleOnly: true }),
       id => {
         const relativeV4ApiUrl =
-          convert({ id, from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.RELATIVE_V4_API_URL })
+          convert({ id, from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.RELATIVE_V4_API_URL })
         expect(relativeV4ApiUrl).to.be.a('string')
         expect(relativeV4ApiUrl).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -471,7 +471,7 @@ describe('convert', function () {
       arbitrary.strongRecordKey({ apiCompatibleOnly: true }),
       id => {
         const absoluteV4ApiUrl =
-          convert({ id, from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.ABSOLUTE_V4_API_URL,
+          convert({ id, from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.ABSOLUTE_V4_API_URL,
             context: { sierraApiHost: 'some.library' } })
         expect(absoluteV4ApiUrl).to.be.a('string')
         expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
@@ -486,7 +486,7 @@ describe('convert', function () {
       arbitrary.strongRecordKey({ apiCompatibleOnly: true }),
       id => {
         const fn =
-          () => convert({ id, from: RecordIdForms.STRONG_RECORD_KEY, to: RecordIdForms.ABSOLUTE_V4_API_URL })
+          () => convert({ id, from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.ABSOLUTE_V4_API_URL })
         expect(fn).to.throw(/SIERRA_API_HOST must be set/i)
       }
     )
@@ -519,7 +519,7 @@ describe('convert', function () {
       arbitrary.databaseId({ virtual: NEVER }),
       id => {
         const recordNumber =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.RECORD_NUMBER })
+          convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.RECORD_NUMBER })
         expect(recordNumber).to.be.a('string')
         expect(recordNumber).to.match(/^[1-9]\d{5,6}$/)
         const { recNum } = unpack(id)
@@ -532,7 +532,7 @@ describe('convert', function () {
       arbitrary.databaseId({ virtual: NEVER }),
       id => {
         const weakRecordKey =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.WEAK_RECORD_KEY })
+          convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.WEAK_RECORD_KEY })
         expect(weakRecordKey).to.be.a('string')
         expect(weakRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -545,7 +545,7 @@ describe('convert', function () {
       arbitrary.databaseId({ virtual: NEVER }),
       id => {
         const weakRecordKey =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.WEAK_RECORD_KEY, initialPeriod: true })
+          convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.WEAK_RECORD_KEY, initialPeriod: true })
         expect(weakRecordKey).to.be.a('string')
         expect(weakRecordKey).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -558,7 +558,7 @@ describe('convert', function () {
       arbitrary.databaseId({ virtual: NEVER }),
       id => {
         const strongRecordKey =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.STRONG_RECORD_KEY })
+          convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.STRONG_RECORD_KEY })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x]$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -573,7 +573,7 @@ describe('convert', function () {
       arbitrary.databaseId(),
       id => {
         const databaseId =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.DATABASE_ID })
+          convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.DATABASE_ID })
         expect(databaseId).to.be.a('string')
         expect(databaseId).to.match(/^\d+$/)
         expect(databaseId).to.equal(id)
@@ -585,7 +585,7 @@ describe('convert', function () {
       arbitrary.databaseId({ virtual: NEVER, apiCompatibleOnly: true }),
       id => {
         const relativeV4ApiUrl =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.RELATIVE_V4_API_URL })
+          convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.RELATIVE_V4_API_URL })
         expect(relativeV4ApiUrl).to.be.a('string')
         expect(relativeV4ApiUrl).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -599,7 +599,7 @@ describe('convert', function () {
       arbitrary.databaseId({ virtual: NEVER, apiCompatibleOnly: true }),
       id => {
         const absoluteV4ApiUrl =
-          convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.ABSOLUTE_V4_API_URL, context: { sierraApiHost: 'some.library' } })
+          convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.ABSOLUTE_V4_API_URL, context: { sierraApiHost: 'some.library' } })
         expect(absoluteV4ApiUrl).to.be.a('string')
         expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -612,7 +612,7 @@ describe('convert', function () {
       'to absolute v4 api url, throws if SIERRA_API_HOST is not set',
       arbitrary.databaseId({ virtual: NEVER, apiCompatibleOnly: true }),
       id => {
-        const fn = () => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.ABSOLUTE_V4_API_URL })
+        const fn = () => convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.ABSOLUTE_V4_API_URL })
         expect(fn).to.throw(/SIERRA_API_HOST must be set/i)
       }
     )
@@ -621,16 +621,16 @@ describe('convert', function () {
       'throws for virtual records',
       arbitrary.databaseId({ virtual: ALWAYS, apiCompatibleOnly: true }),
       id => {
-        expect(() => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.RECORD_NUMBER })).
+        expect(() => convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.RECORD_NUMBER })).
           to.throw('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
-        expect(() => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.WEAK_RECORD_KEY })).
+        expect(() => convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.WEAK_RECORD_KEY })).
           to.throw('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
-        expect(() => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.STRONG_RECORD_KEY })).
+        expect(() => convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.STRONG_RECORD_KEY })).
           to.throw('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
         // database id -> database id is the exception to the rule
-        expect(() => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.RELATIVE_V4_API_URL })).
+        expect(() => convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.RELATIVE_V4_API_URL })).
           to.throw('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
-        expect(() => convert({ id, from: RecordIdForms.DATABASE_ID, to: RecordIdForms.ABSOLUTE_V4_API_URL })).
+        expect(() => convert({ id, from: RecordIdKind.DATABASE_ID, to: RecordIdKind.ABSOLUTE_V4_API_URL })).
           to.throw('Cannot use convert to convert from database ids for virtual records. Must use convertAsync instead')
       }
     )
@@ -659,7 +659,7 @@ describe('convert', function () {
       arbitrary.relativeV4ApiUrl(),
       id => {
         const recordNumber =
-          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.RECORD_NUMBER })
+          convert({ id, from: RecordIdKind.RELATIVE_V4_API_URL, to: RecordIdKind.RECORD_NUMBER })
         expect(recordNumber).to.be.a('string')
         expect(recordNumber).to.match(/^[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recNum, virtPart } = unpack(id)
@@ -672,7 +672,7 @@ describe('convert', function () {
       arbitrary.relativeV4ApiUrl(),
       id => {
         const weakRecordKey =
-          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.WEAK_RECORD_KEY })
+          convert({ id, from: RecordIdKind.RELATIVE_V4_API_URL, to: RecordIdKind.WEAK_RECORD_KEY })
         expect(weakRecordKey).to.be.a('string')
         expect(weakRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -685,7 +685,7 @@ describe('convert', function () {
       arbitrary.relativeV4ApiUrl(),
       id => {
         const weakRecordKey =
-          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.WEAK_RECORD_KEY, initialPeriod: true })
+          convert({ id, from: RecordIdKind.RELATIVE_V4_API_URL, to: RecordIdKind.WEAK_RECORD_KEY, initialPeriod: true })
         expect(weakRecordKey).to.be.a('string')
         expect(weakRecordKey).to.match(/^\.[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -698,7 +698,7 @@ describe('convert', function () {
       arbitrary.relativeV4ApiUrl({ virtual: NEVER }),
       id => {
         const strongRecordKey =
-          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.STRONG_RECORD_KEY })
+          convert({ id, from: RecordIdKind.RELATIVE_V4_API_URL, to: RecordIdKind.STRONG_RECORD_KEY })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x]$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -712,7 +712,7 @@ describe('convert', function () {
       arbitrary.relativeV4ApiUrl({ virtual: NEVER }),
       id => {
         const databaseId =
-          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.DATABASE_ID })
+          convert({ id, from: RecordIdKind.RELATIVE_V4_API_URL, to: RecordIdKind.DATABASE_ID })
         expect(databaseId).to.be.a('string')
         expect(databaseId).to.match(/^\d+$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -728,7 +728,7 @@ describe('convert', function () {
       arbitrary.relativeV4ApiUrl({ virtual: ALWAYS }),
       id => {
         const fn =
-          () => convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.DATABASE_ID })
+          () => convert({ id, from: RecordIdKind.RELATIVE_V4_API_URL, to: RecordIdKind.DATABASE_ID })
         expect(fn).to.throw('Cannot use convert to convert to database ids for virtual records. Must use convertAsync instead')
       }
     )
@@ -738,7 +738,7 @@ describe('convert', function () {
       arbitrary.relativeV4ApiUrl(),
       id => {
         const relativeV4ApiUrl =
-                convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.RELATIVE_V4_API_URL })
+                convert({ id, from: RecordIdKind.RELATIVE_V4_API_URL, to: RecordIdKind.RELATIVE_V4_API_URL })
         expect(relativeV4ApiUrl).to.equal(id)
       }
     )
@@ -748,7 +748,7 @@ describe('convert', function () {
       arbitrary.relativeV4ApiUrl(),
       id => {
         const absoluteV4ApiUrl =
-          convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.ABSOLUTE_V4_API_URL,
+          convert({ id, from: RecordIdKind.RELATIVE_V4_API_URL, to: RecordIdKind.ABSOLUTE_V4_API_URL,
             context: { sierraApiHost: 'some.library' } })
         expect(absoluteV4ApiUrl).to.be.a('string')
         expect(absoluteV4ApiUrl).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
@@ -761,7 +761,7 @@ describe('convert', function () {
       arbitrary.relativeV4ApiUrl(),
       id => {
         const fn =
-          () => convert({ id, from: RecordIdForms.RELATIVE_V4_API_URL, to: RecordIdForms.ABSOLUTE_V4_API_URL })
+          () => convert({ id, from: RecordIdKind.RELATIVE_V4_API_URL, to: RecordIdKind.ABSOLUTE_V4_API_URL })
         expect(fn).to.throw(/SIERRA_API_HOST must be set/i)
       }
     )
@@ -790,7 +790,7 @@ describe('convert', function () {
       arbitrary.absoluteV4ApiUrl(),
       id => {
         const recordNumber =
-          convert({ id, from: RecordIdForms.ABSOLUTE_V4_API_URL, to: RecordIdForms.RECORD_NUMBER })
+          convert({ id, from: RecordIdKind.ABSOLUTE_V4_API_URL, to: RecordIdKind.RECORD_NUMBER })
         expect(recordNumber).to.be.a('string')
         expect(recordNumber).to.match(/^[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recNum, virtPart } = unpack(id)
@@ -803,7 +803,7 @@ describe('convert', function () {
       arbitrary.absoluteV4ApiUrl(),
       id => {
         const weakRecordKey =
-          convert({ id, from: RecordIdForms.ABSOLUTE_V4_API_URL, to: RecordIdForms.WEAK_RECORD_KEY })
+          convert({ id, from: RecordIdKind.ABSOLUTE_V4_API_URL, to: RecordIdKind.WEAK_RECORD_KEY })
         expect(weakRecordKey).to.be.a('string')
         expect(weakRecordKey).to.match(/^[boicaprnveltj][1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -816,7 +816,7 @@ describe('convert', function () {
       arbitrary.absoluteV4ApiUrl({ virtual: NEVER }),
       id => {
         const strongRecordKey =
-          convert({ id, from: RecordIdForms.ABSOLUTE_V4_API_URL, to: RecordIdForms.STRONG_RECORD_KEY })
+          convert({ id, from: RecordIdKind.ABSOLUTE_V4_API_URL, to: RecordIdKind.STRONG_RECORD_KEY })
         expect(strongRecordKey).to.be.a('string')
         expect(strongRecordKey).to.match(/^\.?[boicaprnveltj][1-9]\d{5,6}[0-9x]$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -830,7 +830,7 @@ describe('convert', function () {
       arbitrary.absoluteV4ApiUrl({ virtual: NEVER }),
       id => {
         const databaseId =
-          convert({ id, from: RecordIdForms.ABSOLUTE_V4_API_URL, to: RecordIdForms.DATABASE_ID })
+          convert({ id, from: RecordIdKind.ABSOLUTE_V4_API_URL, to: RecordIdKind.DATABASE_ID })
         expect(databaseId).to.be.a('string')
         expect(databaseId).to.match(/^\d+$/)
         const { recordTypeCode, recNum } = unpack(id)
@@ -846,7 +846,7 @@ describe('convert', function () {
       arbitrary.absoluteV4ApiUrl({ virtual: ALWAYS }),
       id => {
         const fn =
-          () => convert({ id, from: RecordIdForms.ABSOLUTE_V4_API_URL, to: RecordIdForms.DATABASE_ID })
+          () => convert({ id, from: RecordIdKind.ABSOLUTE_V4_API_URL, to: RecordIdKind.DATABASE_ID })
         expect(fn).to.throw('Cannot use convert to convert to database ids for virtual records. Must use convertAsync instead')
       }
     )
@@ -856,7 +856,7 @@ describe('convert', function () {
       arbitrary.absoluteV4ApiUrl(),
       id => {
         const relativeV4ApiUrl =
-          convert({ id, from: RecordIdForms.ABSOLUTE_V4_API_URL, to: RecordIdForms.RELATIVE_V4_API_URL })
+          convert({ id, from: RecordIdKind.ABSOLUTE_V4_API_URL, to: RecordIdKind.RELATIVE_V4_API_URL })
         expect(relativeV4ApiUrl).to.be.a('string')
         expect(relativeV4ApiUrl).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
         const { recordTypeCode, recNum, virtPart } = unpack(id)
@@ -870,7 +870,7 @@ describe('convert', function () {
       arbitrary.absoluteV4ApiUrl(),
       id => {
         const absoluteV4ApiUrl =
-                convert({ id, from: RecordIdForms.ABSOLUTE_V4_API_URL, to: RecordIdForms.ABSOLUTE_V4_API_URL })
+                convert({ id, from: RecordIdKind.ABSOLUTE_V4_API_URL, to: RecordIdKind.ABSOLUTE_V4_API_URL })
         expect(() => new URL(id)).to.not.throw()
         expect(absoluteV4ApiUrl).to.equal(id)
       }
