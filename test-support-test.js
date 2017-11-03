@@ -327,7 +327,7 @@ describe('test-support arbitrary', function () {
       const bigIntId = BigInt(id)
       return {
         campusId: bigIntId.shiftRight(48).and(0xFFFF).toJSNumber(),
-        recordTypeChar: String.fromCodePoint(bigIntId.shiftRight(32).and(0xFFFF).toJSNumber()),
+        recordTypeCode: String.fromCodePoint(bigIntId.shiftRight(32).and(0xFFFF).toJSNumber()),
         recNum: bigIntId.and(0xFFFFFFFF).toJSNumber()
       }
     }
@@ -336,9 +336,9 @@ describe('test-support arbitrary', function () {
       'defaults',
       arbitrary.databaseId(),
       id => {
-        const { campusId, recordTypeChar, recNum  } = unpack(id)
+        const { campusId, recordTypeCode, recNum  } = unpack(id)
         expect(campusId).to.be.within(0, 0xFFFF)
-        expect(recordTypeChar).to.match(/^[boicaprnveltj]$/)
+        expect(recordTypeCode).to.match(/^[boicaprnveltj]$/)
         expect(recNum).to.be.within(100000, 9999999)
       }
     )
@@ -347,9 +347,9 @@ describe('test-support arbitrary', function () {
       'virtual never',
       arbitrary.databaseId({ virtual: arbitrary.NEVER }),
       id => {
-        const { campusId, recordTypeChar, recNum  } = unpack(id)
+        const { campusId, recordTypeCode, recNum  } = unpack(id)
         expect(campusId).to.equal(0)
-        expect(recordTypeChar).to.match(/^[boicaprnveltj]$/)
+        expect(recordTypeCode).to.match(/^[boicaprnveltj]$/)
         expect(recNum).to.be.within(100000, 9999999)
       }
     )
@@ -358,9 +358,9 @@ describe('test-support arbitrary', function () {
       'virtual always',
       arbitrary.databaseId({ virtual: arbitrary.ALWAYS }),
       id => {
-        const { campusId, recordTypeChar, recNum  } = unpack(id)
+        const { campusId, recordTypeCode, recNum  } = unpack(id)
         expect(campusId).to.be.within(1, 0xFFFF)
-        expect(recordTypeChar).to.match(/^[boicaprnveltj]$/)
+        expect(recordTypeCode).to.match(/^[boicaprnveltj]$/)
         expect(recNum).to.be.within(100000, 9999999)
       }
     )
@@ -369,9 +369,9 @@ describe('test-support arbitrary', function () {
       'virtual sometimes',
       arbitrary.databaseId({ virtual: arbitrary.SOMETIMES }),
       id => {
-        const { campusId, recordTypeChar, recNum  } = unpack(id)
+        const { campusId, recordTypeCode, recNum  } = unpack(id)
         expect(campusId).to.be.within(0, 0xFFFF)
-        expect(recordTypeChar).to.match(/^[boicaprnveltj]$/)
+        expect(recordTypeCode).to.match(/^[boicaprnveltj]$/)
         expect(recNum).to.be.within(100000, 9999999)
       }
     )
@@ -380,9 +380,9 @@ describe('test-support arbitrary', function () {
       'size 6',
       arbitrary.databaseId({ size: 6 }),
       id => {
-        const { campusId, recordTypeChar, recNum  } = unpack(id)
+        const { campusId, recordTypeCode, recNum  } = unpack(id)
         expect(campusId).to.be.within(0, 0xFFFF)
-        expect(recordTypeChar).to.match(/^[boicaprnveltj]$/)
+        expect(recordTypeCode).to.match(/^[boicaprnveltj]$/)
         expect(recNum).to.be.within(100000, 999999)
       }
     )
@@ -391,9 +391,9 @@ describe('test-support arbitrary', function () {
       'size 7',
       arbitrary.databaseId({ size: 7 }),
       id => {
-        const { campusId, recordTypeChar, recNum  } = unpack(id)
+        const { campusId, recordTypeCode, recNum  } = unpack(id)
         expect(campusId).to.be.within(0, 0xFFFF)
-        expect(recordTypeChar).to.match(/^[boicaprnveltj]$/)
+        expect(recordTypeCode).to.match(/^[boicaprnveltj]$/)
         expect(recNum).to.be.within(1000000, 9999999)
       }
     )
@@ -402,9 +402,9 @@ describe('test-support arbitrary', function () {
       'api compatible only',
       arbitrary.databaseId({ apiCompatibleOnly: true }),
       id => {
-        const { campusId, recordTypeChar, recNum  } = unpack(id)
+        const { campusId, recordTypeCode, recNum  } = unpack(id)
         expect(campusId).to.be.within(0, 0xFFFF)
-        expect(recordTypeChar).to.match(/^[abniop]$/)
+        expect(recordTypeCode).to.match(/^[abniop]$/)
         expect(recNum).to.be.within(100000, 9999999)
       }
     )

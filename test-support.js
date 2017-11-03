@@ -118,20 +118,20 @@ const COMPLETELY_INVALID_ID = (
 const DIGIT_CHAR = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ])
 const LOWER_ALPHA_DIGIT_CHAR = jsv.elements('abcdefghijklmnopqrstuvwxyz0123456789'.split(''))
 const CHECK_DIGIT = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x' ])
-const ALL_RECORD_TYPE_CHAR = jsv.elements([ 'b', 'o', 'i', 'c', 'a', 'p', 'r', 'n', 'v', 'e', 'l', 't', 'j' ])
-const API_COMPATIBLE_TYPE_CHAR = jsv.elements([ 'a', 'b', 'n', 'i', 'o', 'p' ])
+const ALL_RECORD_TYPE_CODE = jsv.elements([ 'b', 'o', 'i', 'c', 'a', 'p', 'r', 'n', 'v', 'e', 'l', 't', 'j' ])
+const API_COMPATIBLE_TYPE_CODE = jsv.elements([ 'a', 'b', 'n', 'i', 'o', 'p' ])
 const V4_API_RECORD_TYPES = jsv.elements(['authorities', 'bibs', 'invoices', 'items', 'orders', 'patrons'])
 
 const CAMPUS_CODE = (
   _arbitraryFromGenerator(_variableSizeArrayGenerator(1, 5, LOWER_ALPHA_DIGIT_CHAR.generator).map(_1 => _1.join('')))
 )
 
-const URI_HOST = (
+const API_HOST = (
   jsv.nearray(jsv.elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~".split('')))
   .smap(_1 => _1.join(''), _1 => _1.split(''))
 )
 
-const URI_PATH = (
+const API_PATH = (
   jsv.suchthat(
     jsv.nearray(jsv.elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~:@/".split(''))),
     _1 => _1.length !== 1 && _1[0] !== '/'
@@ -171,8 +171,8 @@ function arbitraryInitialPeriod(when) {
 }
 
 
-function arbitraryRecordTypeChar(apiCompatibleOnly = false) {
-  return apiCompatibleOnly ? API_COMPATIBLE_TYPE_CHAR : ALL_RECORD_TYPE_CHAR
+function arbitraryRecordTypeCode(apiCompatibleOnly = false) {
+  return apiCompatibleOnly ? API_COMPATIBLE_TYPE_CODE : ALL_RECORD_TYPE_CODE
 }
 
 
@@ -227,7 +227,7 @@ function arbitraryWeakRecordKey({ size = undefined, initialPeriod = SOMETIMES, v
     return _joinArbitraries(
       '',
       arbitraryInitialPeriod(initialPeriod),
-      arbitraryRecordTypeChar(apiCompatibleOnly),
+      arbitraryRecordTypeCode(apiCompatibleOnly),
       arbitraryRecNum(size),
       arbitraryVirtualRecordPart(virtual),
     )
@@ -262,7 +262,7 @@ function arbitraryStrongRecordKey({ size = undefined, initialPeriod = SOMETIMES,
             )
           },
           arbitraryInitialPeriod(initialPeriod),
-          arbitraryRecordTypeChar(apiCompatibleOnly),
+          arbitraryRecordTypeCode(apiCompatibleOnly),
           arbitraryRecNum(size),
           arbitraryVirtualRecordPart(virtual),
         ),
@@ -278,7 +278,7 @@ function arbitraryStrongRecordKey({ size = undefined, initialPeriod = SOMETIMES,
             return [ ip, rtc, rn, cd, vp ].join('')
           },
           arbitraryInitialPeriod(initialPeriod),
-          arbitraryRecordTypeChar(apiCompatibleOnly),
+          arbitraryRecordTypeCode(apiCompatibleOnly),
           arbitraryRecNum(size),
           arbitraryVirtualRecordPart(virtual),
         )
@@ -313,11 +313,11 @@ function arbitraryDatabaseId({ size = undefined, virtual = SOMETIMES, apiCompati
   return _arbitraryFromGenerator(
     jsv.generator.combine(
       jsv.integer(...virtualRange).generator,
-      arbitraryRecordTypeChar(apiCompatibleOnly).generator,
+      arbitraryRecordTypeCode(apiCompatibleOnly).generator,
       jsv.integer(...recNumRange).generator,
-      (campusId, recordTypeChar, recNum) => (
+      (campusId, recordTypeCode, recNum) => (
         BigInt(campusId).shiftLeft(48)
-        .add(BigInt(recordTypeChar.codePointAt(0)).shiftLeft(32))
+        .add(BigInt(recordTypeCode.codePointAt(0)).shiftLeft(32))
         .add(BigInt(recNum))
         .toString()
       )
@@ -332,8 +332,8 @@ function arbitraryRelativeV4ApiUrl({ size = undefined, virtual = SOMETIMES } = {
 
 
 function arbitraryAbsoluteV4ApiUrl({ size = undefined, virtual = SOMETIMES, sierraApiHost = undefined, sierraApiPath = undefined } = {}) {
-  const arbitraryHost = sierraApiHost === undefined ? URI_HOST : jsv.constant(sierraApiHost)
-  const arbitraryPath = sierraApiPath === undefined ? URI_PATH : jsv.constant(sierraApiPath)
+  const arbitraryHost = sierraApiHost === undefined ? API_HOST : jsv.constant(sierraApiHost)
+  const arbitraryPath = sierraApiPath === undefined ? API_PATH : jsv.constant(sierraApiPath)
   return _joinArbitraries('', jsv.constant('https://'), arbitraryHost, arbitraryPath, arbitraryRelativeV4ApiUrl({ size, virtual }))
 }
 
@@ -352,15 +352,15 @@ module.exports = {
     DIGIT_CHAR,
     LOWER_ALPHA_DIGIT_CHAR,
     CHECK_DIGIT,
-    ALL_RECORD_TYPE_CHAR,
-    API_COMPATIBLE_TYPE_CHAR,
+    ALL_RECORD_TYPE_CODE,
+    API_COMPATIBLE_TYPE_CODE,
     V4_API_RECORD_TYPES,
     CAMPUS_CODE,
-    URI_HOST,
-    URI_PATH,
+    API_HOST,
+    API_PATH,
 
     initialPeriod: arbitraryInitialPeriod,
-    recordTypeChar: arbitraryRecordTypeChar,
+    recordTypeCode: arbitraryRecordTypeCode,
     recNum: arbitraryRecNum,
     virtualRecordPart: arbitraryVirtualRecordPart,
 

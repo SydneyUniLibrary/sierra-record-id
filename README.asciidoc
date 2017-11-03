@@ -93,7 +93,7 @@ convert({
     id: Number | String,
     to: a symbol in RecordIdForms,
     from: a symbol in RecordIdForms = undefined,
-    recordType: String = undefined,
+    recordTypeCode: String = undefined,
     initialPeriod: Boolean = false,
     strongKeysForVirtualRecords: Boolean = false,
 }) => String
@@ -107,13 +107,13 @@ TIP: Any combination of from and to is possible, not just the ones demonstrated 
 ----
 const { convert, RecordIdForms } = require('@sydneyunilibrary/sierra-record-id')
 
-convert({ id: 558315, to: RecordIdForms.WEAK_RECORD_KEY, recordType: 'o' })
+convert({ id: 558315, to: RecordIdForms.WEAK_RECORD_KEY, recordTypeCode: 'o' })
 // => 'o558315'
 
-convert({ id: '558315', to: RecordIdForms.WEAK_RECORD_KEY, recordType: 'o' })
+convert({ id: '558315', to: RecordIdForms.WEAK_RECORD_KEY, recordTypeCode: 'o' })
 // => 'o558315'
 
-convert({ id: '558315', to: RecordIdForms.WEAK_RECORD_KEY, recordType: 'o', initialPeriod: true })
+convert({ id: '558315', to: RecordIdForms.WEAK_RECORD_KEY, recordTypeCode: 'o', initialPeriod: true })
 // => '.o558315'
 
 convert({ id: 'o558315', to: RecordIdForms.RECORD_NUMBER })
@@ -202,7 +202,7 @@ TIP: If you know what you are converting from, specify it in the `from` paramete
 | Specify what is the form of the record id you already have. Use one of the `RecordIdForms` symbols.
   If you don't give the `from` parameter, `convert` will use `detect` to try to determine the form of the id you gave it.
 
-| recordType
+| recordTypeCode
 | Sometimes
 | Only applicable when converting from (but not to) a record number, and in which case it is required.
   Specify the record type character of the record whose id you are converting. Give `a` for authority, `i` for item,
@@ -234,7 +234,7 @@ TIP: If you know what you are converting from, specify it in the `from` paramete
 
 * You gave `RecordIdForms.AMBIGUOUS_RECORD_KEY` as either the `from` or `to` parameters.
 
-* You are converting from a record number, but you haven't given the `recordType` parameter.
+* You are converting from a record number, but you haven't given the `recordTypeCode` parameter.
 
 * You are converting to an absolute v4 api url but you have not set up for Sierra API URLs.
 
@@ -267,7 +267,7 @@ convertAsync({
     id: Number | String,
     to: a symbol in RecordIdForms,
     from: a symbol in RecordIdForms = undefined,
-    recordType: String = undefined,
+    recordTypeCode: String = undefined,
     initialPeriod: Boolean = false,
     strongKeysForVirtualRecords: Boolean = false,
 }) => Promise<String>
