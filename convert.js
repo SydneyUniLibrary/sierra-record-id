@@ -323,6 +323,6 @@ function _convertToAbsoluteV4ApiUrl({ recordTypeCode, recNum, campusCode, contex
 
 module.exports = {
   convert,
-  convertRecordTypeCodeToApiRecordType: convertRecordTypeCodeToApiRecordType,
-  convertApiRecordTypeToRecordTypeCode: convertApiRecordTypeToRecordTypeCode,
+  convertRecordTypeCodeToApiRecordType,
+  convertApiRecordTypeToRecordTypeCode,
 }
