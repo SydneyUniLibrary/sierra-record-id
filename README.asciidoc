@@ -376,7 +376,7 @@ CAUTION: The `make` functions are simple. If you given them garbage, they will p
 ==== Synopsis
 
 [source,js]
-make.recordNumber({ recNum: String, campusCode: String = undefined }) => String
+make.recordNumber({ recNum: String, campusCode: ?String }) => String
 
 ==== Examples
 
@@ -393,7 +393,7 @@ make.recordNumber({ recNum: '587634', campusCode: 'abcde' }) // => '587634@abcde
 ==== Synopsis
 
 [source,js]
-make.weakRecordKey({ recordTypeCode: String, recNum: String, campusCode: String,
+make.weakRecordKey({ recordTypeCode: String, recNum: String, campusCode: ?String,
                      initialPeriod: Boolean = false }) => String
 
 ==== Examples
@@ -423,7 +423,7 @@ NOTE: `make.strongRecordKey` will actually make a strong record key for virtual 
 ==== Synopsis
 
 [source,js]
-make.strongRecordKey({ recordTypeCode: String, recNum: String, campusCode: String,
+make.strongRecordKey({ recordTypeCode: String, recNum: String, checkDigit: String, campusCode: ?String,
                        initialPeriod: Boolean = false }) => String
 
 ==== Examples
@@ -432,15 +432,16 @@ make.strongRecordKey({ recordTypeCode: String, recNum: String, campusCode: Strin
 ----
 const { make } = require('@sydneyunilibrary/sierra-record-id')
 
-make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836' })
-// => 'i3696836'
-make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836', initialPeriod: true })
-// => '.i3696836'
+make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836', checkDigit: '5' })
+// => 'i36968365'
+make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836', checkDigit: '5', initialPeriod: true })
+// => '.i36968365'
 
-make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836', campusCode: 'abcde' })
-// => 'i3696836@abcde'
-make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836', campusCode: 'abcde', initialPeriod: true })
-// => '.i3696836@abcde'
+make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836', checkDigit: '5', campusCode: 'abcde' })
+// => 'i36968365@abcde'
+make.strongRecordKey({ recordTypeCode: 'i', recNum: '3696836', checkDigit: '5', campusCode: 'abcde',
+                       initialPeriod: true })
+// => '.i36968365@abcde'
 ----
 
 === make.databaseId
@@ -473,7 +474,7 @@ NOTE: You need to give `make.relativeV4ApiUrl` an api record type and not a reco
 ==== Synopsis
 
 [source,js]
-make.relativeV4ApiUrl({ apiRecordType: String, recNum: String, campusCode: String }) => String
+make.relativeV4ApiUrl({ apiRecordType: String, recNum: String, campusCode: ?String }) => String
 
 ==== Examples
 
@@ -507,8 +508,8 @@ NOTE: If you don't give the `apiPath` parameter, `make.absoluteV4ApiUrl` with us
 ==== Synopsis
 
 [source,js]
-make.absoluteV4ApiUrl({ apiRecordType: String, recNum: String, campusCode: String,
-                        apiHost: String, apiPath: String }) => String
+make.absoluteV4ApiUrl({ apiRecordType: String, recNum: String, campusCode: ?String,
+                        apiHost: ?String, apiPath: ?String }) => String
 
 ==== Examples
 
@@ -536,6 +537,177 @@ const { convertRecordTypeCodeToApiRecordType } = require('@sydneyunilibrary/sier
 // Assuming process.env['SIERRA_API_HOST'] === 'library.uni.edu' and process.env['SIERRA_API_PATH'] === undefined
 make.relativeV4ApiUrl({ apiRecordType: convertRecordTypeCodeToApiRecordType('p'), recNum: '3696836' })
 // => 'https://library.uni.edu/iii/sierra-api/v4/patrons/3696836'
+----
+
+
+
+
+== parse
+
+CAUTION: The `parse` functions don't do much validation. If they can break apart the record id you give them, then they
+         will and return a result. Just because you get a result from a `parse` function doesn't mean the record id was
+         valid.
+
+=== parse.recordNumber
+
+==== Synopsis
+
+[source,js]
+parse.recordNumber(id: String)
+    => { recNum: String, campusCode: ?String }
+
+==== Examples
+
+[source,js]
+----
+const { parse } = require('@sydneyunilibrary/sierra-record-id')
+
+parse.recordNumber('3696836') // => { recNum: '3696836', campusCode: null }
+parse.recordNumber('587634@abcde') // => { recNum: '587634', campusCode: 'abcde' }
+----
+
+=== parse.weakRecordKey
+
+==== Synopsis
+
+[source,js]
+parse.weakRecordKey(id: String)
+    => { recordTypeCode: String, recNum: String, campusCode: ?String }
+
+==== Examples
+
+[source,js]
+----
+const { parse } = require('@sydneyunilibrary/sierra-record-id')
+
+parse.weakRecordKey('i3696836')
+// => { recordTypeCode: 'i', recNum: '3696836', campusCode: null }
+parse.weakRecordKey('.i3696836')
+// => { recordTypeCode: 'i', recNum: '3696836', campusCode: null }
+parse.weakRecordKey('i3696836@abcde')
+// => { recordTypeCode: 'i', recNum: '3696836', campusCode: 'abcde' }
+parse.weakRecordKey('.i3696836@abcde')
+// => { recordTypeCode: 'i', recNum: '3696836', campusCode: 'abcde' }
+----
+
+=== parse.strongRecordKey
+
+NOTE: `parse.strongRecordKey` does not validate that the check digit is correct for the rec num.
+
+==== Synopsis
+
+[source,js]
+parse.strongRecordKey(id: String)
+    => { recordTypeCode: String, recNum: String, checkDigit: String, campusCode: ?String }
+
+==== Examples
+
+[source,js]
+----
+const { parse } = require('@sydneyunilibrary/sierra-record-id')
+
+parse.strongRecordKey('i36968365')
+// => { recordTypeCode: 'i', recNum: '3696836', checkDigit: '5', campusCode: null }
+parse.strongRecordKey('.i36968365')
+// => { recordTypeCode: 'i', recNum: '3696836', checkDigit: '5', campusCode: null }
+
+parse.strongRecordKey('i36968365@abcde')
+// => { recordTypeCode: 'i', recNum: '3696836', checkDigit: '5', campusCode: 'abcde' }
+parse.strongRecordKey('.i36968365@abcde')
+// => { recordTypeCode: 'i', recNum: '3696836', checkDigit: '5', campusCode: 'abcde' }
+----
+
+=== parse.databaseId
+
+NOTE: When using `parse.databaseId` with virtual records it will give you the campus id and not the campus code.
+      It will not convert a campus id into a campus code for you.
+
+==== Synopsis
+
+[source,js]
+parse.databaseId(id: String)
+    => { recordTypeCode: String, recNum: String, campusId: Number }
+
+==== Examples
+
+[source,js]
+----
+const { parse } = require('@sydneyunilibrary/sierra-record-id')
+
+parse.databaseId('416613515280')
+// => { recordTypeCode: 'a', recNum: '1687568', campusId: 0 }
+parse.databaseId('17451869464937783')
+// => { recordTypeCode: 'b', recNum: '2082103', campusId: 62 }
+----
+
+=== parse.relativeV4ApiUrl
+
+NOTE: `parse.relativeV4ApiUrl` will give you an api record type and not a record type code.
+      The `convertApiRecordTypeToRecordTypeCode` function can help you if you want a record type code.
+
+==== Synopsis
+
+[source,js]
+parse.relativeV4ApiUrl(id: String)
+    => { apiRecordType: String, recNum: String, campusCode: ?String })
+
+==== Examples
+
+[source,js]
+----
+const { parse } = require('@sydneyunilibrary/sierra-record-id')
+
+parse.relativeV4ApiUrl('v4/patrons/3696836')
+// => { apiRecordType: 'patrons', recNum: '3696836', campusCode: null }
+parse.relativeV4ApiUrl('v4/bibs/3696836@abcde')
+// => { apiRecordType: 'bibs', recNum: '3696836', campusCode: 'abcde' }
+
+const { convertApiRecordTypeToRecordTypeCode } = require('@sydneyunilibrary/sierra-record-id')
+
+let parsedId = parse.relativeV4ApiUrl('v4/patrons/3696836')
+Object.assign(
+    parsedId,
+    { recordTypeCode: convertApiRecordTypeToRecordTypeCode(parsedId.apiRecordType) }
+)
+// => { apiRecordType: 'patrons', recordTypeCode: 'p', recNum: '3696836', campusCode: null }
+----
+
+=== parse.absoluteV4ApiUrl
+
+NOTE: `parse.absoluteV4ApiUrl` will give you an api record type and not a record type code.
+      The `convertApiRecordTypeToRecordTypeCode` function can help you if you want a record type code.
+
+NOTE: `parse.absoluteV4ApiUrl` will not validate the api host or api path of the absolute URL.
+
+==== Synopsis
+
+[source,js]
+parse.absoluteV4ApiUrl(id: String)
+    => { apiRecordType: String, recNum: String, campusCode: ?String, apiHost: String, apiPath: String }
+
+==== Examples
+
+[source,js]
+----
+const { parse } = require('@sydneyunilibrary/sierra-record-id')
+
+parse.absoluteV4ApiUrl('https://some.library/iii/sierra-api/v4/patrons/3696836')
+// => { apiRecordType: 'patrons', recNum: '3696836',
+//      apiHost: 'some.library', apiPath: '/iii/sierra-api/' }
+
+parse.absoluteV4ApiUrl('https://some.library/iii/sierra-api/v4/patrons/3696836@abcde')
+// => { apiRecordType: 'patrons', recNum: '3696836', campusCode: 'abcde'
+//      apiHost: 'some.library', apiPath: '/iii/sierra-api/' })
+
+const { convertApiRecordTypeToRecordTypeCode } = require('@sydneyunilibrary/sierra-record-id')
+
+let parsedId = parse.relativeV4ApiUrl('https://some.library/iii/sierra-api/v4/patrons/3696836')
+Object.assign(
+    parsedId,
+    { recordTypeCode: convertApiRecordTypeToRecordTypeCode(parsedId.apiRecordType) }
+)
+// => { apiRecordType: 'patrons', recordTypeCode: 'p', recNum: '3696836', campusCode: null,
+//      apiHost: 'some.library', apiPath: '/iii/sierra-api/' }
 ----
 
 

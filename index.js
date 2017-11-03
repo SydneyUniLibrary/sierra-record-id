@@ -26,4 +26,5 @@ module.exports = Object.assign(
   require('./convert'),
   require('./detect'),
   require('./make'),
+  require('./parse'),
 )
