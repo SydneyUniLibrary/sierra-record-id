@@ -1,0 +1,173 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+
+= validate
+
+CAUTION: `validate` will not check that a give record id actually exists in a Sierra system.
+
+toc::[]
+
+
+
+== Synopsis
+
+[source,js]
+----
+validate(id: String, options: ?Object) => Boolean
+
+validate(id: String, kind: RecordIdKind, options: ?Object) => Boolean
+----
+
+
+
+== Parameters
+
+[options="header"]
+|===
+| Parameter | Required | Description
+| id        | Yes      | A String with the record id you want to validate.
+| kind      | No       | The kind of record id you are validating. If you don't give `validate` a `kind`, it will use
+                         link:detect.asciidoc[`detect`] to try to determine what kind of id you gave it.
+| options   | No       | Validation options, dependant on `kind`. See the validations section below for specifics.
+|===
+
+
+
+== Result
+
+`validate` returns `true` if it could parse the given record id and the record ids parts are valid. See the validations
+section below for specifics.
+
+=== Ambiguous record keys
+
+`validate` specifically returns `false` if you give it an ambiguous record key and don't specify the `kind`.
+
+If you want to validate (potentially) ambiguous record keys you have to specify if you are trying to valid a weak or
+strong record key by giving `RecordIdKind.WEAK_RECORD_KEY` or `RecordIdKind.STRONG_RECORD_KEY` for the `kind` parameter.
+
+If you don't know or don't care if an ambiguous record key is weak or strong, give `RecordIdKind.WEAK_RECORD_KEY` for
+the `kind` parameter. Note that this will only work if the record key is in fact ambiguous.
+
+
+
+
+== Validations
+
+`validate` performs the following checks on the parts of a record id, depending on the record id's kind.
+
+
+=== Record number
+
+[options="header"]
+|===
+| Part       | Validation
+| recNum     | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| campusCode | Is 1-5 alphanumeric characters.
+|===
+
+
+=== Weak record key
+
+[options="header"]
+|===
+| Part           | Validation
+| recordTypeCode | Is a valid record type character.
+| recNum         | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| campusCode     | If present, is 1-5 alphanumeric characters.
+|===
+
+[options="header"]
+|===
+| Option            | Description
+| apiCompatibleOnly | Defaults to `false`. If `true`, the record type code must be one that can be converted to an API URL.
+|===
+
+
+=== Strong record key
+
+[options="header"]
+|===
+| Part           | Validation
+| recordTypeCode | Is a valid record type character.
+| recNum         | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| checkDigit     | Is valid for recNum.
+| campusCode     | If present, is 1-5 alphanumeric characters.
+|===
+
+[options="header"]
+|===
+| Option            | Description
+| apiCompatibleOnly | Defaults to `false`. If `true`, the record type code must be one that can be converted to an API URL.
+|===
+
+
+
+=== Database id
+
+CAUTION: `validate` will not check that a campus id can be mapped to a campus code.
+
+[options="header"]
+|===
+| Part           | Validation
+| recordTypeCode | Is a valid record type character.
+| recNum         | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| campusId       | None.
+|===
+
+[options="header"]
+|===
+| Option            | Description
+| apiCompatibleOnly | Defaults to `false`. If `true`, the record type code must be one that can be converted to an API URL.
+|===
+
+
+
+=== Relative v4 API URL
+
+CAUTION: `validate` will not preprocess the URL. Particularly it will not decode %-encoded characters.
+
+[options="header"]
+|===
+| Part           | Validation
+| apiRecordType  | Is a valid api record type.
+| recNum         | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| campusCode     | If present, is 1-5 alphanumeric characters.
+|===
+
+
+
+=== Absolute v4 API URL
+
+CAUTION: `validate` will not preprocess the URL. Particularly it will not decode %-encoded characters.
+
+[options="header"]
+|===
+| Part           | Validation
+| apiHost        | It ia a legal URL hostname and it matches the expected api host.
+| apiPath        | It is a legal URL path and it matches the expected api path.
+| apiRecordType  | Is a valid api record type.
+| recNum         | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| campusCode     | If present, is 1-5 alphanumeric characters.
+|===
+
+[options="header"]
+|===
+| Option  | Description
+| apiHost | Specifies what the expected api host is.
+| apiPath | Specified what the expected api path is.
+|===
+
+If you do not give the `apiHost` option, `validate` uses `SIERRA_API_HOST` in the process's environment as the expected api host.
+
+If you do not give the `apiPath` option, `validate` uses `/iii/sierra-api/` as the expected api path. This can be
+overridden by `SIERRA_API_PATH` in the process's environment.

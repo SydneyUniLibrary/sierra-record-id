@@ -28,4 +28,5 @@ module.exports = Object.assign(
   require('./lib/kind'),
   require('./lib/make'),
   require('./lib/parse'),
+  require('./lib/validate'),
 )

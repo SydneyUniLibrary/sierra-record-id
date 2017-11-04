@@ -33,6 +33,7 @@ const { convert, convertAsync, make, parse, validate, RecordIdKey } = require('@
 * link:docs/detect.asciidoc[detect]
 * link:docs/make.asciidoc[make]
 * link:docs/parse.asciidoc[parse]
+* link:docs/validate.asciidoc[validate]
 
 
 == How to set up for virtual records
