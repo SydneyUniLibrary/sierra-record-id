@@ -61,7 +61,7 @@ The previous paragraph notwithstanding, if the key for a 6 digit record number h
 (for example `o100007x`), `detect` will detect it as being strong and not as being ambiguous.
 
 
-== Detecting a record ids's kind
+== Detecting a record id's kind
 
 `detect` detects the kind of the record id as follows (in order, after trimming whitespace):
 

@@ -1,0 +1,157 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= Kinds of record id
+
+toc::[]
+
+
+
+== Record number
+
+.Examples
+----
+164905
+1666521
+560184@fhill
+1462119@9qut0
+----
+
+* Record numbers are ambiguous by themselves, because they do not identify the record type. If you want to translate from a record number, you will need to specify which type of record it is.
+
+* Sometimes the term record number in Sierra's documentation actually means what is called a record key here.
+
+* A record number is called a record id in the Sierra API documentation. Although sometimes Sierra produces a record id that
+is actually an absolute v4 API URL.
+
+
+
+== Record key
+
+.Examples of weak record keys
+----
+c154458
+i538329@still
+----
+
+.Examples of ambiguous record keys
+----
+o4105199
+p1308203@9cown
+----
+
+.Examples of strong record keys
+----
+b33846327
+b47116523@mdill
+o100007x
+b1125421x
+i100993x@fhill
+i1799780x@9utsy
+----
+
+* Record keys, both weak and strong, can also start with a period. For example: `.i36968365`, `.i3696836`, `.i587634@abcde`.
+
+* A strong record key includes a final check digit, while a weak record key does not. This terminology comes from the fact that the validity of a record key with a check digit can be verified, and is therefore stronger against corruption and typos than a weak record key.
+
+* Strong virtual record keys are only theoretical and are included for completeness. Sierra (as of v3.3) never actually produces strong virtual record keys. Whenever it produces a strong record key when the record is not virtual, it produces a weak record key when the record is virtual.
+
+* Because record numbers can be 6 or 7 digits, `i3696836` is ambiguous. It could be a weak record key for the 7 digit
+record number `3696836`, or it could be a strong key for the 6 digit record number `369683` with `6` being the check digit.
+
+* https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Detection-logic#detecting-the-strength-of-a-record-key[Detecting the strength of a record key]
+
+
+
+== Database id
+
+These are the ids from Sierra's database. They are not the record ids from Sierra's API, which here are called record numbers.
+
+CAUTION: You must take care when using database ids in ECMAScript. Particularly, they are not safe to store in Numbers and should be stored in Strings. This is because the larger of the database ids, like the 4th example below, are larger than https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER[Number.MAX_SAFE_INTEGER].
+
+.Examples
+----
+425201916762
+450973157841
+563400925525721
+18577829500548651
+----
+
+A database id is a 64-bit packed structure.
+
+....
++--------------+--------------+----------------------------+
+|  Campus Id   | Record Type  |        Record Number       |
++--------------+--------------+----------------------------+
+<-- 16 bits  --><-- 16 bits --><--        32 bits        -->
+....
+
+* The least-significant 32 bits are the record number. That is the `4711652` part of the weak record key `b4711652@mdill`.
+
+* The check digit is not stored in the database id.
+
+* The next significant 16 bits are the record type. This is the UTF-16 code point for the record type character. So it would be 98 for `b`, 105 for `i`, 112 for `p`, and so on.
+
+* The most significant 16 bits are the campus id. The campus id correlates with the `@mdill` part of the weak record key `b4711652@mdill`.
+
+* The mapping between the `@abcde` part of a record number and a campus id is only available in Sierra's database. This is why you need to set up access to Sierra's database if you want to translate to or from database ids for virtual records.
+
+.Examples of decoded record ids and their matching weak record keys
+[options="header"]
+|===
+| Weak record key | Database Id      | Campus Id          | Record Type        | Record Number
+| b572489         | 420907367497     | `0000000000000000` | `0000000001100010` | `00000000000010001011110001001001`
+| b572489@hsill   | 1970745744342089 | `0000000000000111` | `0000000001100010` | `00000000000010001011110001001001`
+| o572489         | 476741942345     | `0000000000000000` | `0000000001101111` | `00000000000010001011110001001001`
+|===
+
+
+
+== Relative v4 API URL
+
+.Examples
+----
+v4/authorities/1316635
+v4/bibs/526894
+v4/bibs/3434098
+v4/bibs/551912@mdill
+v4/bibs/1792259@9woll
+v4/invoices/1044142
+v4/items/118287
+v4/items/2385255
+v4/items/537251@nrill
+v4/items/5532493@9umel
+v4/orders/314855
+v4/orders/1321154
+v4/patrons/210978
+v4/patrons/1351172
+v4/patrons/352099@9unew
+v4/patrons/1024815@9umel
+----
+
+There is no initial forward slash in relative v4 API URLs.
+
+The Sierra API documentation suggests that relative v4 API URLs do start with a forward slash. But according to https://tools.ietf.org/html/rfc3986[the specification for URLs], combining the base `https://sierra.library.edu/iii/sierra-api/` with `/v4/items/3696836` gives `https://sierra.library.edu/v4/items/3696836`. Whereas combining the base `https://sierra.library.edu/iii/sierra-api/` with `v4/items/3696836` gives `https://sierra.library.edu/iii/sierra-api/v4/items/3696836`.
+
+So in `sierra-record-id` there is no initial forward slash on relative v4 API URLs so they can be properly combined with the Sierra API base URL.
+
+
+
+== Absolute v4 API URL
+
+.Examples
+----
+https://sierra.library.edu/iii/sierra-api/v4/items/3696836
+https://sierra.library.edu/iii/sierra-api/v4/items/587634@abcde
+----
+
+* These would be the examples if `SIERRA_API_HOST` is `sierra.library.edu`.

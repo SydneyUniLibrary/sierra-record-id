@@ -67,7 +67,7 @@ SIERRA_API_HOST=sierra.library.edu
 
 `sierra-record-id` uses the following terminology/nomenclature to refer to the different kinds of record id in Sierra.
 
-More details are on https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Kinds-of-record-id[the wiki page].
+link:docs/kind.asciidoc[More details]
 
 [options="header"]
 |===
