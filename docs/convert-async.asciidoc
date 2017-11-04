@@ -1,0 +1,89 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= convertAsync
+
+TIP: You must use `convertAsync` when converting to or from a database id for a virtual record.
+     If you try to use `convert` in this situation, `convert` will throw an error.
+
+
+toc::[]
+
+
+`convertAsync` is the same as link:convert.asciidoc[`convert`] except it potentially does the conversion asynchronously.
+So it returns a Promise that will eventually resolve with the kind of record id you want.
+
+In reality, `convertAsync` will do the conversion synchronously except in the case of a database id for a virtual record,
+and will return a Promise that is already resolved.
+
+`convertAsync` will maintain a two-way cache of the association between the `@abcde` part of a record number and
+the campus id inside a database id. This means only the first time a particular `@abcde` or campus id is encountered will
+`convertAsync` need to use the Sierra database and will therefore need to do the conversion asynchronously. After then it
+will be able to do conversions for that `@abcce` or campus id synchronously. (Although that doesn't mean you can start
+using `convert` instead of `convertAsync`. Sorry.)
+
+
+== Synopsis
+
+[source,js]
+----
+convertAsync({
+    id: Number | String,
+    to: RecordIdKind,
+    from: RecordIdKind = undefined,
+    recordTypeCode: String = undefined,
+    initialPeriod: Boolean = false,
+    strongKeysForVirtualRecords: Boolean = false,
+}) => Promise<String>
+----
+
+
+== Examples
+
+.Using ECMAScript 2017
+[source, js]
+----
+const { convertAsync, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
+
+async function a() {
+    await convertAsync('1970745744342089', to: RecordIdKind.WEAK_RECORD_KEY) // => 'b572489@hsill'
+}
+----
+
+.Using ECMAScript 2016
+[source, js]
+----
+const { convertAsync, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
+
+function a() {
+    convertAsync('1970745744342089', to: RecordIdKind.WEAK_RECORD_KEY)
+    .then(weakRecordKey => {
+        // => 'b572489@hsill'
+    })
+    .catch(err => {
+        // Handle the error
+    })
+}
+----
+
+
+== Parameters
+
+See link:convert.asciidoc[convert] for details on the parameters.
+
+
+== Errors
+
+`convertAsync` will not throw an error directly (notwithstanding any bugs). It will always return a Promise.
+
+The Promise returned from `convertAsync` will reject in the same situations in which `convert` would throw an error.
+Except of course for when you are converting to or from a database id for a virtual record.

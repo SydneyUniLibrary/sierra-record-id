@@ -1,0 +1,178 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= convert
+
+CAUTION: You cannot use `convert` when converting to or from a database id for a virtual record.
+         You must use link:convert-async.asciidoc[`convertAsync`] in this situation because of the potential database access.
+         If you try to use `convert`, it will throw an error.
+
+toc::[]
+
+
+== Synopsis
+
+[source,js]
+----
+convert({
+    id: Number | String,
+    to: RecordIdKind,
+    from: RecordIdKind = undefined,
+    recordTypeCode: String = undefined,
+    initialPeriod: Boolean = false,
+    strongKeysForVirtualRecords: Boolean = false,
+}) => String
+----
+
+
+== Examples
+
+TIP: Any combination of from and to is possible, not just the ones demonstrated here.
+
+[source,js]
+----
+const { convert, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
+
+convert({ id: 558315, to: RecordIdKind.WEAK_RECORD_KEY, recordTypeCode: 'o' })
+// => 'o558315'
+
+convert({ id: '558315', to: RecordIdKind.WEAK_RECORD_KEY, recordTypeCode: 'o' })
+// => 'o558315'
+
+convert({ id: '558315', to: RecordIdKind.WEAK_RECORD_KEY, recordTypeCode: 'o', initialPeriod: true })
+// => '.o558315'
+
+convert({ id: 'o558315', to: RecordIdKind.RECORD_NUMBER })
+// => '558315'
+
+convert({ id: 'o558315', to: RecordIdKind.STRONG_RECORD_KEY })
+// => 'o5583159'
+
+convert({ id: '.o558315', to: RecordIdKind.STRONG_RECORD_KEY })
+// => 'o5583159'
+
+convert({ id: 'o558315', to: RecordIdKind.STRONG_RECORD_KEY, initialPeriod: true })
+// => '.o5583159'
+
+convert({ id: 'o558315', to: RecordIdKind.DATABASE_ID })
+// => '476741928171'
+
+convert({ id: '476741928171', to: RecordIdKind.RELATIVE_V4_API_URL })
+// => 'v4/orders/558315'
+
+convert({ id: '476741928171', to: RecordIdKind.ABSOLUTE_V4_API_URL })
+// => 'https://sierra.library.usyd.edu.au/iii/sierra-api/v4/orders/558315'
+----
+
+=== Converting from ambiguous record keys
+
+CAUTION: Records that have 7 digits are ambiguous. So you have to give the `from` parameter to specify if you are
+         converting from a strong record key or a weak record key.
+
+[source,js]
+----
+const { convert, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
+
+convert({ id: 'b3384639', from: RecordIdKind.WEAK_RECORD_KEY, to: RecordIdKind.DATABASE_ID })
+// => '420910179640'  Because record num is 3384632
+
+convert({ id: 'b3384639', from: RecordIdKind.STRONG_RECORD_KEY, to: RecordIdKind.DATABASE_ID })
+// => '420907133471'  Becasue record num is 338463 and 9 is check digit.
+
+convert({ id: 'b3384639', to: RecordIdKind.DATABASE_ID })
+// => throws an error
+----
+
+=== Unusual behaviour when converting virtual records id to strong record keys
+
+[source,js]
+----
+convert({ id: 'i100993', to: RecordIdKind.STRONG_RECORD_KEY)
+// => 'i100993x' A strong record key, as expected.
+
+convert({ id: 'i100993@fhill', to: RecordIdKind.STRONG_RECORD_KEY)
+// => 'i100993@fhill' !!!! A weak record key, even though we asked for a strong record key !!!!
+
+convert({ id: 'i100993@fhill', to: RecordIdKind.STRONG_RECORD_KEY, strongKeysForVirtualRecords: true)
+// => 'i100993x@fhill' Only now it is strong.
+----
+
+While this is unusual behaviour, `convert` is doing the right thing(TM).
+See the `strongKeysForVirtualRecords` parameter for an explanation.
+
+
+== Parameters
+
+CAUTION: You cannot give `RecordIdKind.AMBIGUOUS_RECORD_KEY` as either the `from` or `to` options.
+         You must specify if the key is strong or weak.
+
+CAUTION: If you give a `from` parameter but then give `convert` a record id of a different kind, the result of `convert`
+         is not defined.
+
+TIP: If you know what you are converting from, specify it in the `from` parameter. `convert` will then not have to call
+     `detect` on the id you give it.
+
+[options="header"]
+|===
+| Parameter | Required | Description
+
+| id
+| Yes
+| A Number or a String that has the record id you want to convert.
+
+| to
+| Yes
+| Specify kind of the record id you want to convert to. Use one of the `RecordIdKind` symbols.
+
+| from
+| No
+| Specify kind of the record id you already have. Use one of the `RecordIdKind` symbols.
+  If you don't give the `from` parameter, `convert` will use `detect` to try to determine the kind of the id you gave it.
+
+| recordTypeCode
+| Sometimes
+| Only applicable when converting from (but not to) a record number, and in which case it is required.
+  Specify the record type character of the record whose id you are converting. Give `a` for authority, `i` for item,
+  `n` for invoice, and so on.
+
+| initialPeriod
+| No
+| Defaults to `false`. Only applicable when converting to (but not from) a weak or strong record key.
+  If `true` then the record key `convert` returns will start with an initial period. If `false` it won't.
+
+| strongKeysForVirtualRecords
+| No
+| Defaults to `false`. Only applicable when converting to (but not from) a strong record keys for a virtual record.
+  Sierra's own behaviour is to produce weak record keys for virtual records, even in situations where it
+  would have produced a strong record key if the record was non-virtual. By default, `convert` will follows this behaviour.
+  That is if you don't give the `strongKeysForVirtualRecords` parameter or you give `false` for it, `convert` will
+  produce a weak record key for virtual records even if you give `RecordIdKind.STRONG_RECORD_KEY` for the `to` parameter.
+  If you really do want strong record keys for virtual records, you need to give `true` for `strongKeysForVirtualRecords`
+  in addition to giving `RecordIdKind.STRONG_RECORD_KEY` for the `to` parameter.
+
+|===
+
+
+== Errors
+
+`convert` will throw an error (in at least) the following situations.
+
+* You did not give the `from` parameter and `detect` returned `RecordIdKind.AMBIGUOUS_RECORD_KEY` or `undefined`
+  for the id you are trying to convert.
+
+* You gave `RecordIdKind.AMBIGUOUS_RECORD_KEY` as either the `from` or `to` parameters.
+
+* You are converting from a record number, but you haven't given the `recordTypeCode` parameter.
+
+* You are converting to an absolute v4 api url but you have not set up for Sierra API URLs.
+
+* You are converting to or from a database id for a virtual record.

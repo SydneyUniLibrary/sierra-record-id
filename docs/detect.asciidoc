@@ -1,0 +1,63 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+= detect
+
+CAUTION: Take heed that detection is not validation. If you give `detect` a string that is not a valid record id,
+         it could incorrectly detect it. Do not rely on `detect` returning `undefined` for invalid record ids.
+         Similarly do not assume `detect` not returning `undefined` means the record id is valid.
+
+TIP: You can detect a database id without having set up `sierra-db-as-promised`.
+     You can also detect an absolute API URL without having set up `SIERRA_API_HOST`.
+
+toc::[]
+
+
+== Synopsis
+
+[source,js]
+detect(id: Number | String) => RecordIdKind | undefined
+
+
+== Examples
+
+[source,js]
+----
+const { detect, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
+
+detect(undefined) // => undefined
+detect('') // => undefined
+detect('something random, but see the warning above!') // => undefined
+
+detect(3696836) // => RecordIdKind.RECORD_NUMBER
+detect('3696836') // => RecordIdKind.RECORD_NUMBER
+detect('o369683') // => RecordIdKind.WEAK_RECORD_KEY
+detect('i3696836') // => RecordIdKind.AMBIGUOUS_RECORD_KEY
+detect('i36968367') // => RecordIdKind.STRONG_RECORD_KEY
+detect('450975262916') // => RecordIdKind.DATABASE_ID
+detect('v4/items/3696836') // => RecordIdKind.RELATIVE_V4_API_URL
+detect('https://sierra.library.edu/iii/sierra-api/v4/items/3696836') // => RecordIdKind.ABSOLUTE_V4_API_URL
+----
+
+`detect` correctly detects record keys that have an initial period, for example `.o369683` and `.i36968367`. It also
+correctly detects record ids for virtual records like `587634@abcde`, `i587634@abcde`, `.i5876345@abcde` and
+`v4/items/587634@abcde`.
+
+* https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Detection-logic[Detection logic]
+
+
+== Ambiguous record keys
+
+Because record numbers can be 6 or 7 digits, `i3696836` is ambiguous. It could be a weak record key for the 7 digit
+record number `3696836`, or it could be a strong key for the 6 digit record number `369683` with `6` being the check digit.
+
+The previous paragraph notwithstanding, if the key for a 6 digit record number has an `x` check digit
+(for example `o100007x`), `detect` will detect it as being strong and not as being ambiguous.
