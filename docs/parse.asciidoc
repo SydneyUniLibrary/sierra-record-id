@@ -148,6 +148,8 @@ parse('17451869464937783', RecordIdKind.DATABASE_ID)
 
 === Relative v4 API URL
 
+CAUTION: `parse` will not preprocess the URL. Particularly it will not decode %-encoded characters.
+
 NOTE: When parsing relative v4 API URLs `parse` will give you an api record type and not a record type code.
       The `convertApiRecordTypeToRecordTypeCode` function can help you if you want a record type code.
 
@@ -183,6 +185,8 @@ Object.assign(
 
 
 === Absolute v4 API URL
+
+CAUTION: `parse` will not preprocess the URL. Particularly it will not decode %-encoded characters.
 
 CAUTION: `parse` will not validate the api host or api path of the absolute v4 API URL.
 
