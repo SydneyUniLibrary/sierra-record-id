@@ -20,7 +20,7 @@ toc::[]
 == How to use
 
 [source,bash]
-npm install 'SydneyUniLibrary/sierra-record-id#v1.0'
+npm install 'SydneyUniLibrary/sierra-record-id#v0.1'
 
 [source,js]
 const { convert, convertAsync, make, parse, validate, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
