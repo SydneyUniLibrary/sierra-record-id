@@ -23,7 +23,7 @@ toc::[]
 npm install 'SydneyUniLibrary/sierra-record-id#v1.0'
 
 [source,js]
-const { convert, convertAsync, make, parse, validate, RecordIdKey } = require('@sydneyunilibrary/sierra-record-id')
+const { convert, convertAsync, make, parse, validate, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
 
 
 == API
