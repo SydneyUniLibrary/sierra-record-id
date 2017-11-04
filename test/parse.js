@@ -38,9 +38,12 @@ describe('parse', function () {
       arbitrary.recNum(),
       expectedRecNum => {
         const recordNumber = make(RecordIdKind.RECORD_NUMBER, { recNum: expectedRecNum })
-        const { recNum, campusCode } = parse.recordNumber(recordNumber)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusCode).to.equal(null)
+        const parseResult = parse(recordNumber, RecordIdKind.RECORD_NUMBER)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.recNum).to.equal(expectedRecNum)
+        expect(parseResult.campusCode).to.equal(null)
+        expect(parseResult).to.eql(parse(recordNumber))
+        expect(parseResult).to.eql(parse.recordNumber(recordNumber))
       }
     )
 
@@ -50,9 +53,12 @@ describe('parse', function () {
       arbitrary.CAMPUS_CODE,
       ( expectedRecNum, expectedCampusCode ) => {
         const recordNumber = make(RecordIdKind.RECORD_NUMBER, { recNum: expectedRecNum, campusCode: expectedCampusCode })
-        const { recNum, campusCode } = parse.recordNumber(recordNumber)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusCode).to.equal(expectedCampusCode)
+        const parseResult = parse(recordNumber, RecordIdKind.RECORD_NUMBER)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.recNum).to.equal(expectedRecNum)
+        expect(parseResult.campusCode).to.equal(expectedCampusCode)
+        expect(parseResult).to.eql(parse(recordNumber))
+        expect(parseResult).to.eql(parse.recordNumber(recordNumber))
       }
     )
 
@@ -63,7 +69,10 @@ describe('parse', function () {
         arbitrary.relativeV4ApiUrl(), arbitrary.absoluteV4ApiUrl(), arbitrary.COMPLETELY_INVALID_ID,
       ]),
       { tests: 1000 },
-      id => expect(parse.recordNumber(id)).to.be.undefined
+      id => {
+        expect(parse(id, RecordIdKind.RECORD_NUMBER)).to.be.undefined
+        expect(parse.recordNumber(id)).to.be.undefined
+      }
     )
 
   })
@@ -76,16 +85,14 @@ describe('parse', function () {
       jsv.bool,
       arbitrary.recNum(),
       arbitrary.recordTypeCode(),
-      ( initialPeriod, expectedRecNum, expectedRecordTypeCode ) => {
-        const weakRecordKey = make(RecordIdKind.WEAK_RECORD_KEY, {
-          initialPeriod,
-          recordTypeCode: expectedRecordTypeCode,
-          recNum: expectedRecNum,
-        })
-        const { recordTypeCode, recNum, campusCode } = parse.weakRecordKey(weakRecordKey)
-        expect(recordTypeCode).to.equal(expectedRecordTypeCode)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusCode).to.equal(null)
+      ( initialPeriod, recNum, recordTypeCode ) => {
+        const weakRecordKey = make(RecordIdKind.WEAK_RECORD_KEY, { initialPeriod, recordTypeCode, recNum })
+        const parseResult = parse(weakRecordKey, RecordIdKind.WEAK_RECORD_KEY)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.recordTypeCode).to.equal(recordTypeCode)
+        expect(parseResult.recNum).to.equal(recNum)
+        expect(parseResult.campusCode).to.equal(null)
+        expect(parseResult).to.eql(parse.weakRecordKey(weakRecordKey))
       }
     )
 
@@ -95,18 +102,27 @@ describe('parse', function () {
       arbitrary.recNum(),
       arbitrary.recordTypeCode(),
       arbitrary.CAMPUS_CODE,
-      ( initialPeriod, expectedRecNum, expectedRecordTypeCode, expectedCampusCode ) => {
-        const weakRecordKey = make(RecordIdKind.WEAK_RECORD_KEY, {
-          initialPeriod,
-          recordTypeCode: expectedRecordTypeCode,
-          recNum: expectedRecNum,
-          campusCode: expectedCampusCode,
-        })
-        const { recordTypeCode, recNum, campusCode } = parse.weakRecordKey(weakRecordKey)
-        expect(recordTypeCode).to.equal(expectedRecordTypeCode)
-        expect(recNum).to.equal(expectedRecNum )
-        expect(campusCode).to.equal(expectedCampusCode )
+      ( initialPeriod, recNum, recordTypeCode, campusCode ) => {
+        const weakRecordKey = make(RecordIdKind.WEAK_RECORD_KEY, { initialPeriod, recordTypeCode, recNum, campusCode })
+        const parseResult = parse(weakRecordKey, RecordIdKind.WEAK_RECORD_KEY)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.recordTypeCode).to.equal(recordTypeCode)
+        expect(parseResult.recNum).to.equal(recNum)
+        expect(parseResult.campusCode).to.equal(campusCode)
+        expect(parseResult).to.eql(parse.weakRecordKey(weakRecordKey))
       }
+    )
+
+    chaiProperty(
+      'detects and parses arbitrary unambiguous weak records keys',
+      arbitrary.weakRecordKey({ ambiguous: NEVER }),
+      weakRecordKey => expect(parse(weakRecordKey)).to.not.be.undefined
+    )
+
+    chaiProperty(
+      'returns undefined for ambiguous strong records keys',
+      arbitrary.weakRecordKey({ ambiguous: ALWAYS }),
+      weakRecordKey => expect(parse(weakRecordKey)).to.be.undefined
     )
 
     chaiProperty(
@@ -116,7 +132,10 @@ describe('parse', function () {
         arbitrary.relativeV4ApiUrl(), arbitrary.absoluteV4ApiUrl(), arbitrary.COMPLETELY_INVALID_ID,
       ]),
       { tests: 1000 },
-      id => expect(parse.weakRecordKey(id)).to.be.undefined
+      id => {
+        expect(parse(id, RecordIdKind.WEAK_RECORD_KEY)).to.be.undefined
+        expect(parse.weakRecordKey(id)).to.be.undefined
+      }
     )
 
   })
@@ -129,17 +148,15 @@ describe('parse', function () {
       jsv.bool,
       arbitrary.recNum(),
       arbitrary.recordTypeCode(),
-      ( initialPeriod, expectedRecNum, expectedRecordTypeCode ) => {
-        const strongRecordKey = make(RecordIdKind.STRONG_RECORD_KEY, {
-          initialPeriod,
-          recordTypeCode: expectedRecordTypeCode,
-          recNum: expectedRecNum,
-          checkDigit: calcCheckDigit(expectedRecNum),
-        })
-        const { recordTypeCode, recNum, campusCode } = parse.strongRecordKey(strongRecordKey)
-        expect(recordTypeCode).to.equal(expectedRecordTypeCode)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusCode).to.equal(null)
+      ( initialPeriod, recNum, recordTypeCode ) => {
+        const strongRecordKey = make(RecordIdKind.STRONG_RECORD_KEY, { initialPeriod, recordTypeCode, recNum: recNum,
+                                                                       checkDigit: calcCheckDigit(recNum) })
+        const parseResult = parse(strongRecordKey, RecordIdKind.STRONG_RECORD_KEY)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.recordTypeCode).to.equal(recordTypeCode)
+        expect(parseResult.recNum).to.equal(recNum)
+        expect(parseResult.campusCode).to.equal(null)
+        expect(parseResult).to.eql(parse.strongRecordKey(strongRecordKey))
       }
     )
 
@@ -149,18 +166,28 @@ describe('parse', function () {
       arbitrary.recNum(),
       arbitrary.recordTypeCode(),
       arbitrary.CAMPUS_CODE,
-      ( initialPeriod, expectedRecNum, expectedRecordTypeCode, expectedCampusCode ) => {
-        const strongRecordKey = make(RecordIdKind.STRONG_RECORD_KEY, {
-          initialPeriod,
-          recordTypeCode: expectedRecordTypeCode,
-          recNum: expectedRecNum,
-          checkDigit: calcCheckDigit(expectedRecNum),
-          campusCode: expectedCampusCode,
-        })
-        const { recNum, campusCode } = parse.strongRecordKey(strongRecordKey)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusCode).to.equal(expectedCampusCode)
+      ( initialPeriod, recNum, recordTypeCode, campusCode ) => {
+        const strongRecordKey = make(RecordIdKind.STRONG_RECORD_KEY, { initialPeriod, recordTypeCode, recNum,
+                                                                       checkDigit: calcCheckDigit(recNum), campusCode })
+        const parseResult = parse(strongRecordKey, RecordIdKind.STRONG_RECORD_KEY)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.recordTypeCode).to.equal(recordTypeCode)
+        expect(parseResult.recNum).to.equal(recNum)
+        expect(parseResult.campusCode).to.equal(campusCode)
+        expect(parseResult).to.eql(parse.strongRecordKey(strongRecordKey))
       }
+    )
+
+    chaiProperty(
+      'detects and parses arbitrary unambiguous strong records keys',
+      arbitrary.strongRecordKey({ ambiguous: NEVER }),
+      strongRecordKey => expect(parse(strongRecordKey)).to.not.be.undefined
+    )
+
+    chaiProperty(
+      'returns undefined for ambiguous strong records keys',
+      arbitrary.strongRecordKey({ ambiguous: ALWAYS }),
+      strongRecordKey => expect(parse(strongRecordKey)).to.be.undefined
     )
 
     chaiProperty(
@@ -170,7 +197,10 @@ describe('parse', function () {
         arbitrary.relativeV4ApiUrl(), arbitrary.absoluteV4ApiUrl(), arbitrary.COMPLETELY_INVALID_ID,
       ]),
       { tests: 1000 },
-      id => expect(parse.strongRecordKey(id)).to.be.undefined
+      id => {
+        expect(parse(id, RecordIdKind.STRONG_RECORD_KEY)).to.be.undefined
+        expect(parse.strongRecordKey(id)).to.be.undefined
+      }
     )
 
   })
@@ -182,15 +212,15 @@ describe('parse', function () {
       'parses non-virtual database ids',
       arbitrary.recNum(),
       arbitrary.recordTypeCode(),
-      ( expectedRecNum, expectedRecordTypeCode ) => {
-        const databaseId = make(RecordIdKind.DATABASE_ID, {
-          recordTypeCode: expectedRecordTypeCode,
-          recNum: expectedRecNum,
-        })
-        const { recordTypeCode, recNum, campusId } = parse.databaseId(databaseId)
-        expect(recordTypeCode).to.equal(expectedRecordTypeCode)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusId).to.equal(0)
+      ( recNum, recordTypeCode ) => {
+        const databaseId = make(RecordIdKind.DATABASE_ID, { recordTypeCode, recNum })
+        const parseResult = parse(databaseId, RecordIdKind.DATABASE_ID)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.recordTypeCode).to.equal(recordTypeCode)
+        expect(parseResult.recNum).to.equal(recNum)
+        expect(parseResult.campusId).to.equal(0)
+        expect(parseResult).to.eql(parse(databaseId))
+        expect(parseResult).to.eql(parse.databaseId(databaseId))
       }
     )
 
@@ -199,16 +229,15 @@ describe('parse', function () {
       arbitrary.recNum(),
       arbitrary.recordTypeCode(),
       jsv.integer(1, 0xFFFF),
-      ( expectedRecNum, expectedRecordTypeCode, expectedCampusId ) => {
-        const databaseId = make(RecordIdKind.DATABASE_ID, {
-          recordTypeCode: expectedRecordTypeCode,
-          recNum: expectedRecNum,
-          campusId: expectedCampusId,
-        })
-        const { recordTypeCode, recNum, campusId } = parse.databaseId(databaseId)
-        expect(recordTypeCode).to.equal(expectedRecordTypeCode)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusId).to.equal(expectedCampusId)
+      ( recNum, recordTypeCode, campusId ) => {
+        const databaseId = make(RecordIdKind.DATABASE_ID, { recordTypeCode, recNum, campusId })
+        const parseResult = parse(databaseId, RecordIdKind.DATABASE_ID)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.recordTypeCode).to.equal(recordTypeCode)
+        expect(parseResult.recNum).to.equal(recNum)
+        expect(parseResult.campusId).to.equal(campusId)
+        expect(parseResult).to.eql(parse(databaseId))
+        expect(parseResult).to.eql(parse.databaseId(databaseId))
       }
     )
 
@@ -219,7 +248,10 @@ describe('parse', function () {
         arbitrary.relativeV4ApiUrl(), arbitrary.absoluteV4ApiUrl(), arbitrary.COMPLETELY_INVALID_ID,
       ]),
       { tests: 1000 },
-      id => expect(parse.databaseId(id)).to.be.undefined
+      id => {
+        expect(parse(id, RecordIdKind.DATABASE_ID)).to.be.undefined
+        expect(parse.databaseId(id)).to.be.undefined
+      }
     )
 
   })
@@ -231,16 +263,16 @@ describe('parse', function () {
       'parses non-virtual relative v4 api urls',
       arbitrary.recNum(),
       arbitrary.recordTypeCode({ apiCompatibleOnly: true }),
-      ( expectedRecNum, recordTypeCode ) => {
-        const expectedApiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
-        const relativeV4ApiUrl = make(RecordIdKind.RELATIVE_V4_API_URL, {
-          apiRecordType: expectedApiRecordType,
-          recNum: expectedRecNum,
-        })
-        const { apiRecordType, recNum, campusCode } = parse.relativeV4ApiUrl(relativeV4ApiUrl)
-        expect(apiRecordType).to.equal(expectedApiRecordType)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusCode).to.equal(null)
+      ( recNum, recordTypeCode ) => {
+        const apiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
+        const relativeV4ApiUrl = make(RecordIdKind.RELATIVE_V4_API_URL, { apiRecordType, recNum })
+        const parseResult = parse(relativeV4ApiUrl, RecordIdKind.RELATIVE_V4_API_URL)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.apiRecordType).to.equal(apiRecordType)
+        expect(parseResult.recNum).to.equal(recNum)
+        expect(parseResult.campusCode).to.equal(null)
+        expect(parseResult).to.eql(parse(relativeV4ApiUrl))
+        expect(parseResult).to.eql(parse.relativeV4ApiUrl(relativeV4ApiUrl))
       }
     )
 
@@ -249,17 +281,16 @@ describe('parse', function () {
       arbitrary.recNum(),
       arbitrary.recordTypeCode({ apiCompatibleOnly: true }),
       arbitrary.CAMPUS_CODE,
-      ( expectedRecNum, recordTypeCode, expectedCampusCode ) => {
-        const expectedApiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
-        const relativeV4ApiUrl = make(RecordIdKind.RELATIVE_V4_API_URL, {
-          apiRecordType: expectedApiRecordType,
-          recNum: expectedRecNum,
-          campusCode: expectedCampusCode,
-        })
-        const { apiRecordType, recNum, campusCode } = parse.relativeV4ApiUrl(relativeV4ApiUrl)
-        expect(apiRecordType).to.equal(expectedApiRecordType)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusCode).to.equal(expectedCampusCode)
+      ( recNum, recordTypeCode, campusCode ) => {
+        const apiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
+        const relativeV4ApiUrl = make(RecordIdKind.RELATIVE_V4_API_URL, { apiRecordType, recNum, campusCode })
+        const parseResult = parse(relativeV4ApiUrl, RecordIdKind.RELATIVE_V4_API_URL)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.apiRecordType).to.equal(apiRecordType)
+        expect(parseResult.recNum).to.equal(recNum)
+        expect(parseResult.campusCode).to.equal(campusCode)
+        expect(parseResult).to.eql(parse(relativeV4ApiUrl))
+        expect(parseResult).to.eql(parse.relativeV4ApiUrl(relativeV4ApiUrl))
       }
     )
 
@@ -270,7 +301,10 @@ describe('parse', function () {
         arbitrary.databaseId(), arbitrary.absoluteV4ApiUrl(), arbitrary.COMPLETELY_INVALID_ID,
       ]),
       { tests: 1000 },
-      id => expect(parse.relativeV4ApiUrl(id)).to.be.undefined
+      id => {
+        expect(parse(id, RecordIdKind.RELATIVE_V4_API_URL)).to.be.undefined
+        expect(parse.relativeV4ApiUrl(id)).to.be.undefined
+      }
     )
 
   })
@@ -284,20 +318,18 @@ describe('parse', function () {
       arbitrary.API_PATH,
       arbitrary.recNum(),
       arbitrary.recordTypeCode({ apiCompatibleOnly: true }),
-      ( expectedApiHost, expectedApiPath, expectedRecNum, recordTypeCode ) => {
-        const expectedApiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
-        const relativeV4ApiUrl = make(RecordIdKind.ABSOLUTE_V4_API_URL, {
-          apiRecordType: expectedApiRecordType,
-          recNum: expectedRecNum,
-          apiHost: expectedApiHost,
-          apiPath: expectedApiPath,
-        })
-        const { apiRecordType, recNum, campusCode, apiHost, apiPath } = parse.absoluteV4ApiUrl(relativeV4ApiUrl)
-        expect(apiRecordType).to.equal(expectedApiRecordType)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusCode).to.equal(null)
-        expect(apiHost).to.equal(expectedApiHost)
-        expect(apiPath).to.equal(expectedApiPath)
+      ( apiHost, apiPath, recNum, recordTypeCode ) => {
+        const apiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
+        const absoluteV4ApiUrl = make(RecordIdKind.ABSOLUTE_V4_API_URL, { apiRecordType, recNum, apiHost, apiPath })
+        const parseResult = parse(absoluteV4ApiUrl, RecordIdKind.ABSOLUTE_V4_API_URL)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.apiRecordType).to.equal(apiRecordType)
+        expect(parseResult.recNum).to.equal(recNum)
+        expect(parseResult.campusCode).to.equal(null)
+        expect(parseResult.apiHost).to.equal(apiHost)
+        expect(parseResult.apiPath).to.equal(apiPath)
+        expect(parseResult).to.eql(parse(absoluteV4ApiUrl))
+        expect(parseResult).to.eql(parse.absoluteV4ApiUrl(absoluteV4ApiUrl))
       }
     )
 
@@ -308,21 +340,18 @@ describe('parse', function () {
       arbitrary.recNum(),
       arbitrary.recordTypeCode({ apiCompatibleOnly: true }),
       arbitrary.CAMPUS_CODE,
-      ( expectedApiHost, expectedApiPath, expectedRecNum, recordTypeCode, expectedCampusCode ) => {
-        const expectedApiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
-        const relativeV4ApiUrl = make(RecordIdKind.ABSOLUTE_V4_API_URL, {
-          apiRecordType: expectedApiRecordType,
-          recNum: expectedRecNum,
-          campusCode: expectedCampusCode,
-          apiHost: expectedApiHost,
-          apiPath: expectedApiPath,
-        })
-        const { apiRecordType, recNum, campusCode, apiHost, apiPath } = parse.absoluteV4ApiUrl(relativeV4ApiUrl)
-        expect(apiRecordType).to.equal(expectedApiRecordType)
-        expect(recNum).to.equal(expectedRecNum)
-        expect(campusCode).to.equal(expectedCampusCode)
-        expect(apiHost).to.equal(expectedApiHost)
-        expect(apiPath).to.equal(expectedApiPath)
+      ( apiHost, apiPath, recNum, recordTypeCode, campusCode ) => {
+        const apiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
+        const absoluteV4ApiUrl = make(RecordIdKind.ABSOLUTE_V4_API_URL, { apiRecordType, recNum, campusCode, apiHost, apiPath })
+        const parseResult = parse(absoluteV4ApiUrl, RecordIdKind.ABSOLUTE_V4_API_URL)
+        expect(parseResult).to.be.a('Object')
+        expect(parseResult.apiRecordType).to.equal(apiRecordType)
+        expect(parseResult.recNum).to.equal(recNum)
+        expect(parseResult.campusCode).to.equal(campusCode)
+        expect(parseResult.apiHost).to.equal(apiHost)
+        expect(parseResult.apiPath).to.equal(apiPath)
+        expect(parseResult).to.eql(parse(absoluteV4ApiUrl))
+        expect(parseResult).to.eql(parse.absoluteV4ApiUrl(absoluteV4ApiUrl))
       }
     )
 
@@ -333,7 +362,10 @@ describe('parse', function () {
         arbitrary.databaseId(), arbitrary.relativeV4ApiUrl(), arbitrary.COMPLETELY_INVALID_ID,
       ]),
       { tests: 1000 },
-      id => expect(parse.absoluteV4ApiUrl(id)).to.be.undefined
+      id => {
+        expect(parse(id, RecordIdKind.ABSOLUTE_V4_API_URL)).to.be.undefined
+        expect(parse.absoluteV4ApiUrl(id)).to.be.undefined
+      }
     )
 
   })

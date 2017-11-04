@@ -26,7 +26,7 @@ const jsv = require('jsverify')
 const { convertRecordTypeCodeToApiRecordType } = require('..')
 const { arbitrary, chaiProperty } = require('../test-support')
 
-const { make, RecordIdKind } = require('../index')
+const { make, RecordIdKind } = require('..')
 
 
 describe('make', function () {
