@@ -21,13 +21,12 @@
 const chai = require('chai')
 const expect = chai.expect
 const jsv = require('jsverify')
-const { URL } = require('url')
 const { calcCheckDigit } = require('@sydneyunilibrary/sierra-record-check-digit')
 
 const { arbitrary, chaiProperty } = require('./test-support')
 const { ALWAYS, NEVER, SOMETIMES } = arbitrary
 
-const { convertRecordTypeCodeToApiRecordType, make, parse } = require('.')
+const { convertRecordTypeCodeToApiRecordType, make, parse, RecordIdKind } = require('.')
 
 
 describe('parse', function () {
@@ -38,7 +37,7 @@ describe('parse', function () {
       'parses non-virtual record numbers',
       arbitrary.recNum(),
       expectedRecNum => {
-        const recordNumber = make.recordNumber({ recNum: expectedRecNum })
+        const recordNumber = make(RecordIdKind.RECORD_NUMBER, { recNum: expectedRecNum })
         const { recNum, campusCode } = parse.recordNumber(recordNumber)
         expect(recNum).to.equal(expectedRecNum)
         expect(campusCode).to.equal(null)
@@ -50,7 +49,7 @@ describe('parse', function () {
       arbitrary.recNum(),
       arbitrary.CAMPUS_CODE,
       ( expectedRecNum, expectedCampusCode ) => {
-        const recordNumber = make.recordNumber({ recNum: expectedRecNum, campusCode: expectedCampusCode })
+        const recordNumber = make(RecordIdKind.RECORD_NUMBER, { recNum: expectedRecNum, campusCode: expectedCampusCode })
         const { recNum, campusCode } = parse.recordNumber(recordNumber)
         expect(recNum).to.equal(expectedRecNum)
         expect(campusCode).to.equal(expectedCampusCode)
@@ -78,8 +77,8 @@ describe('parse', function () {
       arbitrary.recNum(),
       arbitrary.recordTypeCode(),
       ( initialPeriod, expectedRecNum, expectedRecordTypeCode ) => {
-        const weakRecordKey = make.weakRecordKey({
-          initialPeriod: initialPeriod ? ALWAYS : NEVER,
+        const weakRecordKey = make(RecordIdKind.WEAK_RECORD_KEY, {
+          initialPeriod,
           recordTypeCode: expectedRecordTypeCode,
           recNum: expectedRecNum,
         })
@@ -97,8 +96,8 @@ describe('parse', function () {
       arbitrary.recordTypeCode(),
       arbitrary.CAMPUS_CODE,
       ( initialPeriod, expectedRecNum, expectedRecordTypeCode, expectedCampusCode ) => {
-        const weakRecordKey = make.weakRecordKey({
-          initialPeriod: initialPeriod ? ALWAYS : NEVER,
+        const weakRecordKey = make(RecordIdKind.WEAK_RECORD_KEY, {
+          initialPeriod,
           recordTypeCode: expectedRecordTypeCode,
           recNum: expectedRecNum,
           campusCode: expectedCampusCode,
@@ -131,8 +130,8 @@ describe('parse', function () {
       arbitrary.recNum(),
       arbitrary.recordTypeCode(),
       ( initialPeriod, expectedRecNum, expectedRecordTypeCode ) => {
-        const strongRecordKey = make.strongRecordKey({
-          initialPeriod: initialPeriod ? ALWAYS : NEVER,
+        const strongRecordKey = make(RecordIdKind.STRONG_RECORD_KEY, {
+          initialPeriod,
           recordTypeCode: expectedRecordTypeCode,
           recNum: expectedRecNum,
           checkDigit: calcCheckDigit(expectedRecNum),
@@ -151,8 +150,8 @@ describe('parse', function () {
       arbitrary.recordTypeCode(),
       arbitrary.CAMPUS_CODE,
       ( initialPeriod, expectedRecNum, expectedRecordTypeCode, expectedCampusCode ) => {
-        const strongRecordKey = make.strongRecordKey({
-          initialPeriod: initialPeriod ? ALWAYS : NEVER,
+        const strongRecordKey = make(RecordIdKind.STRONG_RECORD_KEY, {
+          initialPeriod,
           recordTypeCode: expectedRecordTypeCode,
           recNum: expectedRecNum,
           checkDigit: calcCheckDigit(expectedRecNum),
@@ -184,7 +183,7 @@ describe('parse', function () {
       arbitrary.recNum(),
       arbitrary.recordTypeCode(),
       ( expectedRecNum, expectedRecordTypeCode ) => {
-        const databaseId = make.databaseId({
+        const databaseId = make(RecordIdKind.DATABASE_ID, {
           recordTypeCode: expectedRecordTypeCode,
           recNum: expectedRecNum,
         })
@@ -201,7 +200,7 @@ describe('parse', function () {
       arbitrary.recordTypeCode(),
       jsv.integer(1, 0xFFFF),
       ( expectedRecNum, expectedRecordTypeCode, expectedCampusId ) => {
-        const databaseId = make.databaseId({
+        const databaseId = make(RecordIdKind.DATABASE_ID, {
           recordTypeCode: expectedRecordTypeCode,
           recNum: expectedRecNum,
           campusId: expectedCampusId,
@@ -234,7 +233,7 @@ describe('parse', function () {
       arbitrary.recordTypeCode({ apiCompatibleOnly: true }),
       ( expectedRecNum, recordTypeCode ) => {
         const expectedApiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
-        const relativeV4ApiUrl = make.relativeV4ApiUrl({
+        const relativeV4ApiUrl = make(RecordIdKind.RELATIVE_V4_API_URL, {
           apiRecordType: expectedApiRecordType,
           recNum: expectedRecNum,
         })
@@ -252,7 +251,7 @@ describe('parse', function () {
       arbitrary.CAMPUS_CODE,
       ( expectedRecNum, recordTypeCode, expectedCampusCode ) => {
         const expectedApiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
-        const relativeV4ApiUrl = make.relativeV4ApiUrl({
+        const relativeV4ApiUrl = make(RecordIdKind.RELATIVE_V4_API_URL, {
           apiRecordType: expectedApiRecordType,
           recNum: expectedRecNum,
           campusCode: expectedCampusCode,
@@ -287,7 +286,7 @@ describe('parse', function () {
       arbitrary.recordTypeCode({ apiCompatibleOnly: true }),
       ( expectedApiHost, expectedApiPath, expectedRecNum, recordTypeCode ) => {
         const expectedApiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
-        const relativeV4ApiUrl = make.absoluteV4ApiUrl({
+        const relativeV4ApiUrl = make(RecordIdKind.ABSOLUTE_V4_API_URL, {
           apiRecordType: expectedApiRecordType,
           recNum: expectedRecNum,
           apiHost: expectedApiHost,
@@ -311,7 +310,7 @@ describe('parse', function () {
       arbitrary.CAMPUS_CODE,
       ( expectedApiHost, expectedApiPath, expectedRecNum, recordTypeCode, expectedCampusCode ) => {
         const expectedApiRecordType = convertRecordTypeCodeToApiRecordType(recordTypeCode)
-        const relativeV4ApiUrl = make.absoluteV4ApiUrl({
+        const relativeV4ApiUrl = make(RecordIdKind.ABSOLUTE_V4_API_URL, {
           apiRecordType: expectedApiRecordType,
           recNum: expectedRecNum,
           campusCode: expectedCampusCode,

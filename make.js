@@ -20,9 +20,30 @@
 
 const BigInt = require('big-integer')
 
+const { RecordIdKind } = require('./detect')
 
 
-function makeRecordNumber({ recNum, campusCode }) {
+function make(kind, parts) {
+  switch (kind) {
+    case RecordIdKind.RECORD_NUMBER:
+      return make.recordNumber(parts.recNum, parts.campusCode)
+    case RecordIdKind.WEAK_RECORD_KEY:
+      return make.weakRecordKey(parts.recordTypeCode, parts.recNum, parts.campusCode, parts.initialPeriod)
+    case RecordIdKind.STRONG_RECORD_KEY:
+      return make.strongRecordKey(parts.recordTypeCode, parts.recNum, parts.checkDigit, parts.campusCode, parts.initialPeriod)
+    case RecordIdKind.DATABASE_ID:
+      return make.databaseId(parts.recordTypeCode, parts.recNum, parts.campusId)
+    case RecordIdKind.RELATIVE_V4_API_URL:
+      return make.relativeV4ApiUrl(parts.apiRecordType, parts.recNum, parts.campusCode)
+    case RecordIdKind.ABSOLUTE_V4_API_URL:
+      return make.absoluteV4ApiUrl(parts.apiRecordType, parts.recNum, parts.campusCode, parts.apiHost, parts.apiPath)
+    default:
+      throw new Error(`Invalid record kind: ${String(kind)}`)
+  }
+}
+
+
+make.recordNumber = (recNum, campusCode) => {
   if (campusCode) {
     return `${ recNum }@${ campusCode }`
   } else {
@@ -31,7 +52,7 @@ function makeRecordNumber({ recNum, campusCode }) {
 }
 
 
-function makeWeakRecordKey({ recordTypeCode, recNum, campusCode, initialPeriod = false }) {
+make.weakRecordKey = (recordTypeCode, recNum, campusCode, initialPeriod = false) => {
   if (campusCode) {
     return `${ initialPeriod ? '.' : '' }${ recordTypeCode }${ recNum }@${ campusCode }`
   } else {
@@ -40,7 +61,7 @@ function makeWeakRecordKey({ recordTypeCode, recNum, campusCode, initialPeriod =
 }
 
 
-function makeStrongRecordKey({ recordTypeCode, recNum, checkDigit, campusCode, initialPeriod = false }) {
+make.strongRecordKey = (recordTypeCode, recNum, checkDigit, campusCode, initialPeriod = false) => {
   if (campusCode) {
     return `${ initialPeriod ? '.' : '' }${ recordTypeCode }${ recNum }${ checkDigit }@${ campusCode }`
   } else {
@@ -49,7 +70,7 @@ function makeStrongRecordKey({ recordTypeCode, recNum, checkDigit, campusCode, i
 }
 
 
-function makeDatabaseId({ recordTypeCode, recNum, campusId }) {
+make.databaseId = (recordTypeCode, recNum, campusId) => {
   return (
     (campusId ? BigInt(campusId).and(0xFFFF).shiftLeft(48) : BigInt.zero)
     .add(BigInt(recordTypeCode.codePointAt(0)).and(0xFFFF).shiftLeft(32))
@@ -59,7 +80,7 @@ function makeDatabaseId({ recordTypeCode, recNum, campusId }) {
 }
 
 
-function makeRelativeV4ApiUrl({ apiRecordType, recNum, campusCode }) {
+make.relativeV4ApiUrl = (apiRecordType, recNum, campusCode) => {
   if (campusCode) {
     return `v4/${ apiRecordType }/${recNum}@${campusCode}`
   } else {
@@ -68,9 +89,12 @@ function makeRelativeV4ApiUrl({ apiRecordType, recNum, campusCode }) {
 }
 
 
-function makeAbsoluteV4ApiUrl({ apiRecordType, recNum, campusCode, apiHost, apiPath }) {
+make.absoluteV4ApiUrl = (apiRecordType, recNum, campusCode, apiHost, apiPath) => {
   //noinspection AssignmentToFunctionParameterJS
   apiHost = apiHost || process.env['SIERRA_API_HOST']
+  if (!apiHost) {
+    throw new Error("apiHost parameter is undefined and SIERRA_API_HOST is not defined in the process's environment")
+  }
   //noinspection AssignmentToFunctionParameterJS
   apiPath = apiPath || process.env['SIERRA_API_PATH'] || '/iii/sierra-api/'
   if (campusCode) {
@@ -82,16 +106,5 @@ function makeAbsoluteV4ApiUrl({ apiRecordType, recNum, campusCode, apiHost, apiP
 
 
 module.exports = {
-
-  make: Object.freeze({
-
-    recordNumber: makeRecordNumber,
-    weakRecordKey: makeWeakRecordKey,
-    strongRecordKey: makeStrongRecordKey,
-    databaseId: makeDatabaseId,
-    relativeV4ApiUrl: makeRelativeV4ApiUrl,
-    absoluteV4ApiUrl: makeAbsoluteV4ApiUrl,
-
-  })
-
+  make
 }
