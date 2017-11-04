@@ -10,7 +10,9 @@ ifdef::env-github[]
 endif::[]
 
 
-= convertAsync
+= ⚠️ NOT IMPLEMENTED
+
+CAUTION: `convertAsync` has not been implemented in this version. It is expected to be implemented in version 1.0.
 
 TIP: You must use `convertAsync` when converting to or from a database id for a virtual record.
      If you try to use `convert` in this situation, `convert` will throw an error.

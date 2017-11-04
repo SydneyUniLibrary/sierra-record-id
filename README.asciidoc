@@ -29,7 +29,7 @@ const { convert, convertAsync, make, parse, validate, RecordIdKind } = require('
 == API
 
 * link:docs/convert.asciidoc[convert]
-* link:docs/convert-async.asciidoc[convertAsync]
+* link:docs/convert-async.asciidoc[convertAsync] ⚠️ NOT IMPLEMENTED
 * link:docs/detect.asciidoc[detect]
 * link:docs/make.asciidoc[make]
 * link:docs/parse.asciidoc[parse]
