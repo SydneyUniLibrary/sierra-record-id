@@ -23,10 +23,10 @@ const chai = require('chai')
 const expect = chai.expect
 const jsv = require('jsverify')
 
-const { convertRecordTypeCodeToApiRecordType } = require('.')
-const { arbitrary, chaiProperty } = require('./test-support')
+const { convertRecordTypeCodeToApiRecordType } = require('..')
+const { arbitrary, chaiProperty } = require('../test-support')
 
-const { make, RecordIdKind } = require('.')
+const { make, RecordIdKind } = require('../index')
 
 
 describe('make', function () {

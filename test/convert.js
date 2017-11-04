@@ -24,9 +24,9 @@ const jsv = require('jsverify')
 const { URL } = require('url')
 const { calcCheckDigit } = require('@sydneyunilibrary/sierra-record-check-digit')
 
-const { convert, RecordIdKind } = require('.')
-const { convertRecordTypeCodeToApiRecordType, convertApiRecordTypeToRecordTypeCode } = require('./convert')
-const { arbitrary, chaiProperty } = require('./test-support')
+const { convert, RecordIdKind } = require('..')
+const { convertRecordTypeCodeToApiRecordType, convertApiRecordTypeToRecordTypeCode } = require('../lib/convert')
+const { arbitrary, chaiProperty } = require('../test-support')
 
 const { ALWAYS, NEVER, SOMETIMES } = arbitrary
 

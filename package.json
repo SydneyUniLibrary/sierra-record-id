@@ -1,7 +1,7 @@
 {
   "name": "@sydneyunilibrary/sierra-record-id",
   "version": "1.0.0",
-  "description": "Makes, parses, converts and validates the various forms of identifying a record in Sierra.",
+  "description": "Makes, parses, converts and validates the various kinds of Sierra record ids.",
   "license": "GPL-3.0",
   "main": "index.js",
   "repository": "SydneyUniLibrary/sierra-record-id",
@@ -20,6 +20,6 @@
     "mocha": "*"
   },
   "scripts": {
-    "test": "mocha *-test.js"
+    "test": "mocha"
   }
 }

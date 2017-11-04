@@ -22,8 +22,8 @@ const chai = require('chai')
 const expect = chai.expect
 const jsv = require('jsverify')
 
-const { detect, RecordIdKind } = require('.')
-const { arbitrary, chaiProperty } = require('./test-support')
+const { detect, RecordIdKind } = require('..')
+const { arbitrary, chaiProperty } = require('../test-support')
 
 
 describe('detect', function () {

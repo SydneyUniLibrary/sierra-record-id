@@ -23,10 +23,10 @@ const expect = chai.expect
 const jsv = require('jsverify')
 const { calcCheckDigit } = require('@sydneyunilibrary/sierra-record-check-digit')
 
-const { arbitrary, chaiProperty } = require('./test-support')
+const { arbitrary, chaiProperty } = require('../test-support')
 const { ALWAYS, NEVER, SOMETIMES } = arbitrary
 
-const { convertRecordTypeCodeToApiRecordType, make, parse, RecordIdKind } = require('.')
+const { convertRecordTypeCodeToApiRecordType, make, parse, RecordIdKind } = require('..')
 
 
 describe('parse', function () {

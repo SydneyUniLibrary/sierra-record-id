@@ -24,7 +24,7 @@ const expect = chai.expect
 const jsv = require('jsverify')
 const { URL } = require('url')
 
-const { arbitrary, chaiProperty } = require('./test-support')
+const { arbitrary, chaiProperty } = require('../test-support')
 
 
 chai.use(require('chai-string'))
