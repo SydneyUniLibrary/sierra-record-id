@@ -51,8 +51,6 @@ detect('https://sierra.library.edu/iii/sierra-api/v4/items/3696836') // => Recor
 correctly detects record ids for virtual records like `587634@abcde`, `i587634@abcde`, `.i5876345@abcde` and
 `v4/items/587634@abcde`.
 
-* https://github.com/SydneyUniLibrary/sierra-record-id/wiki/Detection-logic[Detection logic]
-
 
 == Ambiguous record keys
 
@@ -61,3 +59,29 @@ record number `3696836`, or it could be a strong key for the 6 digit record numb
 
 The previous paragraph notwithstanding, if the key for a 6 digit record number has an `x` check digit
 (for example `o100007x`), `detect` will detect it as being strong and not as being ambiguous.
+
+
+== Detecting a record ids's kind
+
+`detect` detects the kind of the record id as follows (in order, after trimming whitespace):
+
+. If the id starts with `.`, then it is a record key and `detect` calls `detectRecordKeyStrength`.
+. If the id starts with `https://` and contains `/v4/`, then it is an absolute v4 API URL.
+. If the id starts with `v4/`, then it is a relative v4 API URL.
+. If the id starts with a letter, then it is a record key and `detect` calls `detectRecordKeyStrength`.
+. If the id is a string 12 or more digits, then it is a database id.
+. If the id starts with a digit, then it is a record number.
+. Otherwise the kind of the record id is unknown.
+
+
+=== Detecting the strength of a record key
+
+`detectRecordKeyStrength` (which `detect` calls) detects the strength of a record key as follows:
+
+. `detectRecordKeyStrength` strips that off any virtual record part (like `@abcde`), any initial period,
+  and the record type character.
+. If what's left ends in `x`, then the record key is strong.
+. If what's left is a string of 6 digits, then the record key is weak.
+. If what's left is a string of 7 digits, then the record key is ambiguous.
+. If what's left is a string of 8 digits, then the record key is strong.
+. Otherwise the record key is actually invalid.
