@@ -12,6 +12,9 @@ endif::[]
 
 = sierra-record-id
 
+WARNING: This release is functional, except convertAsync is not implemented.
+         However the API is still experimental and is subject to (possibly radical) change.
+
 Makes, parses, converts and validates the various kinds of identifying a record in Sierra.
 
 toc::[]
