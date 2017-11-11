@@ -18,9 +18,6 @@
 'use strict'
 
 
-require('dotenv').load()
-
-
 module.exports = Object.assign(
   {},
   require('./lib/convert'),
