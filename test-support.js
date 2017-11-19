@@ -114,6 +114,10 @@ const COMPLETELY_INVALID_ID = (
   ])
 )
 
+const INVALID_REC_NUM = jsv.oneof([ jsv.integer(0, 99999), jsv.integer(10000000, Number.MAX_SAFE_INTEGER) ])
+const INVALID_RECORD_TYPE_CODE = jsv.elements('dfghkmqsuwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split(''))
+const API_INCOMPATIBLE_RECORD_TYPE_CODE = jsv.elements([ 'c', 'r', 'v', 'e', 'l', 't', 'j' ])
+
 
 const DIGIT_CHAR = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ])
 const LOWER_ALPHA_DIGIT_CHAR = jsv.elements('abcdefghijklmnopqrstuvwxyz0123456789'.split(''))
@@ -134,7 +138,14 @@ const API_HOST = (
 const API_PATH = (
   jsv.suchthat(
     jsv.nearray(jsv.elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~:@/".split(''))),
-    _1 => _1.length !== 1 && _1[0] !== '/'
+    _1 => (
+      // Don't single character paths
+      _1.length !== 1 &&
+      // Don't generate paths that start with a forward slash
+      _1[0] !== '/' &&
+      // Don't generate paths that contain consecutive forward slashes
+      !_1.reduce((acc, val, idx, arr) => acc || (val === '/' && arr[idx + 1] === '/'), false)
+    )
   )
   .smap(
     _1 => {
@@ -327,14 +338,23 @@ function arbitraryDatabaseId({ size = undefined, virtual = SOMETIMES, apiCompati
 
 
 function arbitraryRelativeV4ApiUrl({ size = undefined, virtual = SOMETIMES } = {}) {
-  return _joinArbitraries('/', jsv.constant('v4'), V4_API_RECORD_TYPES, arbitraryRecordNumber({ size, virtual }))
+  return _joinArbitraries('/', jsv.constant('/v4'), V4_API_RECORD_TYPES, arbitraryRecordNumber({ size, virtual }))
 }
 
 
 function arbitraryAbsoluteV4ApiUrl({ size = undefined, virtual = SOMETIMES, sierraApiHost = undefined, sierraApiPath = undefined } = {}) {
   const arbitraryHost = sierraApiHost === undefined ? API_HOST : jsv.constant(sierraApiHost)
   const arbitraryPath = sierraApiPath === undefined ? API_PATH : jsv.constant(sierraApiPath)
-  return _joinArbitraries('', jsv.constant('https://'), arbitraryHost, arbitraryPath, arbitraryRelativeV4ApiUrl({ size, virtual }))
+  return _joinArbitraries('', jsv.constant('https://'), arbitraryHost, arbitraryPath, jsv.constant('v4/'),
+                              V4_API_RECORD_TYPES, jsv.constant('/'), arbitraryRecordNumber({ size, virtual }))
+}
+
+
+const _WHITESPACE = jsv.elements([ '\f', '\n', '\r', '\t', '\v' ])
+
+function arbitraryWhitespaceString({ minLength = 0, maxLength = 50 } = {}) {
+  return _arbitraryFromGenerator(
+    _variableSizeArrayGenerator(minLength, maxLength, _WHITESPACE.generator).map(_1 => _1.join('')))
 }
 
 
@@ -348,6 +368,9 @@ module.exports = {
     ALWAYS,
 
     COMPLETELY_INVALID_ID,
+    INVALID_REC_NUM,
+    INVALID_RECORD_TYPE_CODE,
+    API_INCOMPATIBLE_RECORD_TYPE_CODE,
 
     DIGIT_CHAR,
     LOWER_ALPHA_DIGIT_CHAR,
@@ -370,6 +393,8 @@ module.exports = {
     databaseId: arbitraryDatabaseId,
     relativeV4ApiUrl: arbitraryRelativeV4ApiUrl,
     absoluteV4ApiUrl: arbitraryAbsoluteV4ApiUrl,
+
+    whitespaceString: arbitraryWhitespaceString,
 
   }),
 

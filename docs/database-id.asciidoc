@@ -1,0 +1,224 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= DatabaseId
+
+toc::[]
+
+
+
+
+== Overview
+
+`class DatabaseId extends link:record-id.asciidoc[RecordId]`
+
+.Examples of database id strings
+----
+425201916762
+450973157841
+563400925525721
+18577829500548651
+----
+
+* This is the id used internally within the Sierra database, which does not use record keys.
+
+* It is a link:#structure-of-a-database-id[structure packed into 64-bit unsigned integer].
+
+* You must take care when using database ids in ECMAScript. Particularly, they are not safe to store in numbers and
+  should be stored in strings. This is because database ids can be larger than
+  link:https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER[Number.MAX_SAFE_INTEGER].
+
+
+
+
+== Parts
+
+[source,js]
+----
+type DatabaseId.Parts = {
+    recordTypeCode: string,
+    recNum: string,
+    campusId: number,
+}
+----
+
+[options="header"]
+|===
+| Part           | Description
+| recordTypeCode | The 1 character code for the record type.
+| recNum         | The actual number part of the record id.
+| campusId       | The internal database id that correlates to the campusCode part of a virtual record.
+                   `0` if the record id isn't for a virtual record.
+                   Defaults to `0`.
+|===
+
+You get the parts of a database id via the `parts` property, or you can get individual parts directly.
+
+[source,js]
+----
+const databaseId = new DatabaseId('416613515280')
+databaseId.parts // => { recordTypeCode: 'a', recNum: '1687568', campusId: 0 }
+databaseId.recordTypeCode // => 'a'
+databaseId.recNum // => '1687568'
+databaseId.campusId // => 0
+----
+
+[source,js]
+----
+const databaseId = new DatabaseId('17451869464937783')
+databaseId.parts // => { recordTypeCode: 'b', recNum: '2082103', campusId: 62 }
+databaseId.recordTypeCode // => 'b'
+databaseId.recNum // => '2082103'
+databaseId.campusId // => 62
+----
+
+You can construct database id from parts.
+
+[source,js]
+----
+const databaseId = new DatabaseId({ recordTypeCode: 'a', recNum: '1687568' })
+databaseId.parts // => { recordTypeCode: 'a', recNum: '1687568', campusId: 0 }
+databaseId.toString() // => '416613515280'
+----
+
+[source,js]
+----
+const databaseId = new DatabaseId({ recordTypeCode: 'b', recNum: '2082103', campusId: 62 })
+databaseId.parts // => { recordTypeCode: 'b', recNum: '2082103', campusId: 62 }
+databaseId.toString() // => '17451869464937783'
+----
+
+WARNING: You can't give the `DatabaseId` constructor a `campusCode` part. It cannot convert a `campusCode` into a
+         `campusId` for you. If you only have `campusCode`, construct a link:weak-record-key.asciidoc[WeakRecordKey]
+         and then call link:record-id.asciidoc#converttoasync[convertToAsync] in order to convert to a database id.
+
+NOTE: It's possible to you might see both a `campusCode` and a `campusId` part. This is just a side-effect of
+      converting to a database id from another kind of record id.
+
+NOTE: It's possible to give both `campusCode` and `campusId` when constructing a database id. This is just a side-effect
+      of being able to converting to a database id from another kind of record id. If you do, `DatabaseId` will not
+      check that the `campusCode` and `campusId` correlate. It will just trust that they do.
+
+
+
+
+== Converting
+
+There are no options for converting to a database id.
+
+=== Non-virtual records
+
+For record ids that are *not* for virtual records, there is nothing special about either converting to a database id or
+converting from a database id. You use the `convertTo` method in the same way as you would when converting to or from
+any other kind of record id.
+
+TIP: link:record-id.asciidoc#convertto[More information]
+
+=== Virtual records
+
+For record ids that *are* for virtual record you *cannot* use `convertTo` to convert either to or from a database id.
+If you try to, `convertTo` will throw an error.
+
+You must use `convertToAsync` for virtual records. This is because `sierra-record-id` may need to lookup the
+correlation between `campusCode` and `campusId` in the Sierra database.
+
+CAUTION: `convertToAsync` has not been implemented yet. It is expect to be implemented by v1.0.
+
+TIP: link:record-id.asciidoc#converttoasync[More information]
+
+=== Lookup cache
+
+`convertToAsync` maintains a two-way cache of the correlation between `campusCode` and `campusId`.
+
+This means only the first time a particular campus code or campus id is encountered will `convertToAsync` need to use
+the Sierra database and will therefore need to do the conversion asynchronously.
+
+After then it will be able to do conversions for that campus code or campus id synchronously.
+
+CAUTION: `convertToAsync` has not been implemented yet. It is expect to be implemented by v1.0.
+
+NOTE: Just because the correlation between a `campusCode` and its `campusId` is in the lookup cache doesn't mean you can
+      get away with using `convertTo` instead of `convertToAsync`. Sorry.
+
+
+
+== Stringifying
+
+`toString()` will give you a 64-bit unsigned decimal integer, as a string. This string is suitable for use in a
+PostgreSQL query.
+
+TIP: link:record-id.asciidoc#tostring[More information]
+
+
+
+
+== Validation
+
+[options="header"]
+|===
+| Part           | Validation
+| recordTypeCode | Is a valid record type code. Which record type codes are valid depends on the
+                   `apiCompatibleOnly` option.
+| recNum         | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| campusId       | Is an integer between 0x0000 and 0xFFFF.
+|===
+
+[options="header"]
+|===
+| Option            | Description
+| apiCompatibleOnly | If `true`, the record type code must be one that can be converted to an absolute or relative
+                      API URL. If `false`, the record type code can be any of the types Sierra supports.
+                      Defaults to `false`.
+|===
+
+CAUTION: `validate` will not check that a campus id can actually be mapped to a campus code.
+
+TIP: link:record-id.asciidoc#validate[More information]
+
+
+
+
+== Structure of a database id
+
+A database id is a 64-bit packed structure.
+
+....
++--------------+--------------+----------------------------+
+|  Campus Id   | Record Type  |        Record Number       |
++--------------+--------------+----------------------------+
+<-- 16 bits  --><-- 16 bits --><--        32 bits        -->
+....
+
+* The least-significant 32 bits are the recNum. That is the `4711652` part of the weak record key `b4711652@mdill`.
+
+* The next significant 16 bits are the record type. This is the UTF-16 code point for the record type code.
+  For example: `98` for `b`, `105` for `i`, `112` for `p`.
+
+* The most significant 16 bits are the campus id. The campus id correlates with the campus code part of other kinds of
+  record id.
+
+* The mapping between a campus code and a campus id is only available in Sierra's database. This is why you need to set
+  up access to Sierra's database if you want to translate to or from database ids for virtual records.
+
+* The mapping between a campus code and a campus id is likely to be different between different Sierra sites, possibly
+  even between a production and a testing/training environment of the same site.
+
+* There is no check digit (or checksum) stored in a database id.
+
+.Examples of decoded record ids and their equivalent weak record keys
+[options="header"]
+|===
+| Weak record key | Database Id      | Campus Id          | Record Type        | Record Number
+| b572489         | 420907367497     | `0000000000000000` | `0000000001100010` | `00000000000010001011110001001001`
+| b572489@abcde   | 1970745744342089 | `0000000000000111` | `0000000001100010` | `00000000000010001011110001001001`
+| o572489         | 476741942345     | `0000000000000000` | `0000000001101111` | `00000000000010001011110001001001`
+|===

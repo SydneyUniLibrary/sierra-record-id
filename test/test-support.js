@@ -420,37 +420,37 @@ describe('test-support arbitrary', function () {
     chaiProperty(
       'defaults',
       arbitrary.relativeV4ApiUrl(),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'virtual never',
       arbitrary.relativeV4ApiUrl({ virtual: arbitrary.NEVER }),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
+      id => expect(id).to.match(/^\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
     )
 
     chaiProperty(
       'virtual always',
       arbitrary.relativeV4ApiUrl({ virtual: arbitrary.ALWAYS }),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}@[a-z0-9]{1,5}$/)
+      id => expect(id).to.match(/^\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}@[a-z0-9]{1,5}$/)
     )
 
     chaiProperty(
       'virtual sometimes',
       arbitrary.relativeV4ApiUrl({ virtual: arbitrary.SOMETIMES }),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 6',
       arbitrary.relativeV4ApiUrl({ size: 6 }),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5}(@[a-z0-9]{1,5})?$/)
     )
 
     chaiProperty(
       'size 7',
       arbitrary.relativeV4ApiUrl({ size: 7 }),
-      id => expect(id).to.match(/^v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{6}(@[a-z0-9]{1,5})?$/)
+      id => expect(id).to.match(/^\/v4\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{6}(@[a-z0-9]{1,5})?$/)
     )
 
   })

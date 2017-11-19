@@ -1,0 +1,217 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= StrongRecordKey
+
+toc::[]
+
+
+
+
+== Overview
+
+`class StrongRecordKey extends link:weak-record-key.asciidoc[WeakRecordKey]`
+
+.Examples of strong record key strings
+----
+b33846327
+.b47116523@mdill
+o100007x
+.i1799780x@9utsy
+----
+
+* Strong record keys include a final check digit, while link:weak-record-key.asciidoc[weak record keys] does not.
+  This terminology comes from the fact that the validity of a record key with a check digit can be verified, and is
+  therefore stronger against corruption and typos than a weak record key.
+
+* Strong record keys link:record-id.asciidoc#ambiguous-record-keys[can be ambiguous]. Ambiguous strong record keys will
+  cause link:record-id.asciidoc#detect[RecordId.detect] and
+  link:record-id.asciidoc#fromstring[RecordId.fromString] to fail.
+
+* Strong virtual record keys are only theoretical. Sierra (as of v3.3) never actually produces strong virtual record
+  keys, it instead produces weak record keys for virtual records. `sierra-record-id`
+  link:#virtual-records[by default also follows this behaviour].
+
+
+
+
+== Parts
+
+[source,js]
+----
+type StrongRecordKey.Parts = {
+    initialPeriod = false: boolean,
+    recordTypeCode: string,
+    recNum: string,
+    checkDigit?: string,
+    campusCode = null: null | string
+}
+----
+
+[options="header"]
+|===
+| Part           | Description
+| initialPeriod  | `true` if the strong record key was created from a string that started with an initial period.
+                   If `true`, the result from `toString()` will start with an initial period by default.
+                   Defaults to `false`.
+| recordTypeCode | The 1 character code for the record type.
+| recNum         | The actual number part of the record id.
+| checkDigit     | The 1 character check digit. Defaults to the correct check digit for the given `recNum` part.
+| campusCode     | The 1-5 character code for a virtual record's campus/location.
+                   `null` if the record id isn't for a virtual record.
+                   Defaults to `null`.
+|===
+
+You get the parts of a strong record key via the `parts` property, or you can get individual parts directly.
+
+[source,js]
+----
+const strongRecordKey = new StrongRecordKey('b33846327')
+strongRecordKey.parts
+// => { initialPeriod: false, recordTypeCode: 'b', recNum: '3384632', checkDigit: '7', campusCode: null }
+strongRecordKey.initialPeriod // => false
+strongRecordKey.recordTypeCode // => 'b'
+strongRecordKey.recNum // => '3384632'
+strongRecordKey.checkDigit // => '7'
+strongRecordKey.campsuCode // => null
+----
+
+[source,js]
+----
+const strongRecordKey = new StrongRecordKey('.i1799780x@9utsy')
+strongRecordKey.parts
+// => { initialPeriod: true, recordTypeCode: 'i', recNum: '1799780', checkDigit: 'x', campusCode: '9utsy' }
+strongRecordKey.initialPeriod // => true
+strongRecordKey.recordTypeCode // => 'i'
+strongRecordKey.recNum // => '1799780'
+strongRecordKey.checkDigit // => 'x'
+strongRecordKey.campsuCode // => '9utsy'
+----
+
+You can construct strong record keys from parts.
+
+[source,js]
+----
+const strongRecordKey = new StrongRecordKey({ recordTypeCode: 'o', recNum: '100007' })
+strongRecordKey.parts
+// => { initialPeriod: false, recordTypeCode: 'o', recNum: '100007', checkDigit: 'x', campusCode: null }
+strongRecordKey.toString() // => 'o100007x'
+----
+
+[source,js]
+----
+const strongRecordKey =
+    new StrongRecordKey({ initialPeriod: true, recordTypeCode: 'i', recNum: '1799780', checkDigit: '9', campusCode 'st' })
+strongRecordKey.parts
+// => { initialPeriod: true, recordTypeCode: 'i', recNum: '1799780', checkDigit: '9', campusCode 'st' }
+strongRecordKey.toString() // => '.i17997809@st'
+----
+
+CAUTION: When you give a string to the `StrongRecordKey` constructor, it will *not* validate that the check digit is
+         correct. The same for when you give a `checkDigit` part.
+
+TIP: If you don't give a `checkDigit` part, the `StrongRecordKey` constructor will calculate it for you.
+
+
+
+
+== Converting
+
+You can give an `initialPeriod` option when converting to a strong record key. If you don't, the `initialPeriod` part
+of the strong record key will be `false`.
+
+[source,js]
+----
+const recordId = new RelativeV4ApiUrl('v4/items/1843944')
+
+recordId.convertTo(StrongRecordKey).parts
+// => { initialPeriod: false, recordTypeCode: 'i', recNum: '1843944', checkDigit: '5', campusCode: null }
+
+recordId.convertTo(StrongRecordKey, { initialPeriod: false }).parts
+// => { initialPeriod: false, recordTypeCode: 'i', recNum: '1843944', checkDigit: '5', campusCode: null }
+
+recordId.convertTo(StrongRecordKey, { initialPeriod: true }).parts
+// => { initialPeriod: true, recordTypeCode: 'i', recNum: '1843944', checkDigit: '5', campusCode: null }
+----
+
+TIP: link:record-id.asciidoc#convertto[More information]
+
+=== Virtual records
+
+Sierra's own behaviour is to produce weak record keys for virtual records, even in situations where it would have
+produced a strong record key if the record was non-virtual. By default, `convertTo` will follows this behaviour.
+
+If you don't give the `strongKeysForVirtualRecords` option or you give `false` for it, `convertTo` will convert a record
+id for a virtual record to a weak record key even though you requested to convert to a strong record key.
+
+If you really do want strong record keys for virtual records, you need to give `true` for the `strongKeysForVirtualRecords` option.
+
+[source,js]
+----
+const recordId1 = new RelativeV4ApiUrl('v4/items/1843944@abcde')
+
+const recordId2 = recordId1.convertTo(StrongRecordKey)
+recordId2 instanceof StrongRecordKey // => false
+recordId2 instanceof WeakRecordKey // => true
+recordId2.toString() // => 'i1843944@abcde' <1>
+
+const recordId3 = recordId1.convertTo(StrongRecordKey, { strongKeysForVirtualRecords: true })
+recordId3 instanceof StrongRecordKey // => true
+recordId3 instanceof WeakRecordKey // => true <2>
+recordId3.toString() // => 'i18439445@abcde' <3>
+----
+
+<1> There is no check digit
+<2> Because StrongRecordKey extends WeakRecordKey
+<3> There is a check digit
+
+
+
+
+== Stringifying
+
+
+[options="header"]
+|===
+| initialPeriod | campusCode | Template
+| false         | null       | `${recordTypeCode}${recNum}${checkDigit}`
+| false         | not null   | `${recordTypeCode}${recNum}${checkDigit}@${campusCode}`
+| true          | null       | `.${recordTypeCode}${recNum}${checkDigit}`
+| true          | not null   | `.${recordTypeCode}${recNum}${checkDigit}@${campusCode}`
+|===
+
+TIP: link:record-id.asciidoc#tostring[More information]
+
+
+
+
+== Validation
+
+[options="header"]
+|===
+| Part           | Validation
+| recordTypeCode | Is a valid record type code. Which record type codes are valid depends on the
+                   `apiCompatibleOnly` option.
+| recNum         | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| checkDigit     | Is valid for recNum.
+| campusCode     | If not null, is 1-5 alphanumeric characters.
+|===
+
+[options="header"]
+|===
+| Option            | Description
+| apiCompatibleOnly | If `true`, the record type code must be one that can be converted to an absolute or relative
+                      API URL. If `false`, the record type code can be any of the types Sierra supports.
+                      Defaults to `false`.
+|===
+
+TIP: link:record-id.asciidoc#validate[More information]

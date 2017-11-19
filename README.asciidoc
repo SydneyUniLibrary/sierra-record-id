@@ -12,82 +12,386 @@ endif::[]
 
 = sierra-record-id
 
-WARNING: This release is functional, except convertAsync is not implemented.
-         However the API is still experimental and is subject to (possibly radical) change.
+WARNING: This release is functional, except convertToAsync is not implemented.
+         However the API is still experimental and is subject to change.
 
-Makes, parses, converts and validates the various kinds of identifying a record in Sierra.
+NOTE: This is a server-side library designed to work with Node.js 8 LTS (8.9.x). It does not work in a browser.
+
+Makes, parses, converts and validates the various kinds of record identifiers in Sierra.
 
 toc::[]
 
 
-== How to use
+
+== Kinds of record id
+
+`sierra-record-id` uses the following terminology to refer to the different kinds of record id in Sierra.
+
+`sierra-record-id` uses the term link:docs/record-id.asciidoc[record id] as an umbrella term to mean any of the kinds
+below. It is also the base class for `sierra-record-id`.
+
+[options="header"]
+|===
+| Kind/Term           | Example            | Virtual record example
+
+| link:docs/record-number.asciidoc[Record number]
+| `3696836`
+| `587634@abcde`
+
+| link:docs/weak-record-key.asciidoc[Weak record key]
+| `i3696836`
+| `i587634@abcde`
+
+| link:docs/strong-record-key.asciidoc[Strong record key]
+| `i36968365`
+| `i5876345@abcde`
+
+| link:docs/database-id.asciidoc[Database id]
+| `450975262916`
+| `28192594886437`
+
+| link:docs/relative-v4-api-url.asciidoc[Relative v4 API URL]
+| `/v4/items/3696836`
+| `/v4/items/587634@abcde`
+
+| link:docs/absolute-v4-api-url.asciidoc[Absolute v4 API URL]
+| `\https://sierra.library.edu/iii/sierra-api/v4/items/3696836`
+| `\https://sierra.library.edu/iii/sierra-api/v4/items/587634@abcde`
+
+|===
+
+A record key has a record type character, which a record number does not have.
+
+A strong record key has a check digit, which a weak record key does not have.
+
+The Sierra API uses the term record id to generally mean record number. But sometimes it means an absolute API URL.
+
+
+
+
+=== The parts of a record id
+
+The different kinds of record id are made of different parts. For example, a weak record key is made up of a record type
+character, a record number, and possibly a campus code. A relative v4 api url is made up of the same parts, although it
+looks different to a weak record key.
+
+The parts of a record id are in so-called parts objects. These are regular objects that have particular properties.
+Continuing the example, the parts object you give to or get from `WeakRecordKey` include `recordTypeChar`, `recNum` and
+`campusCode`.
+
+"What is `recNum`?" I hear you ask.
+
+The term record number is somewhat ambiguous in Sierra. In some contexts it is the same as what `sierra-record-id` calls
+a record number. In some contexts it is the same as what `sierra-record-id` calls a record key. Sometimes in Sierra the
+term record number refers to the just the number part of record id. In `sierra-record-id` this is called `recNum`.
+
+`recNum` is always a number and not a string. So it does not include other parts like the record type character or the
+check digit. The record type character and the check digit, if they are part of a record id will be in other properties
+of a parts object.
+
+
+
+
+== How to get started
+
+First install `sierra-record-id`
 
 [source,bash]
-npm install 'SydneyUniLibrary/sierra-record-id#v0.1'
+npm install 'SydneyUniLibrary/sierra-record-id#v0.2.0'
+
+Then require the library in your code
 
 [source,js]
-const { convert, convertAsync, make, parse, validate, RecordIdKind } = require('@sydneyunilibrary/sierra-record-id')
+----
+const {
+        RecordId, RecordNumber, WeakRecordKey, StrongRecordKey, DatabaseId,
+        RelativeV4ApiUrl, AbsoluteV4ApiUrl
+    } = require('@sydneyunilibrary/sierra-record-id')
+----
+
+You can require just what you need. The examples below assume you required everything.
 
 
-== API
-
-* link:docs/convert.asciidoc[convert]
-* link:docs/convert-async.asciidoc[convertAsync] ⚠️ NOT IMPLEMENTED
-* link:docs/detect.asciidoc[detect]
-* link:docs/make.asciidoc[make]
-* link:docs/parse.asciidoc[parse]
-* link:docs/validate.asciidoc[validate]
 
 
-== How to set up for virtual records
+== Parsing a record id string
+
+[source,js]
+----
+const recordNumber = new RecordNumber('3696836')
+const weakRecordKey1 = new WeakRecordKey('i3696836')
+const weakRecordKey2 = new WeakRecordKey('.i3696836')
+const strongRecordKey1 = new StrongRecordKey('i36968365')
+const strongRecordKey2 = new StrongRecordKey('.i36968365')
+const databaseId = new DatabaseId('450975262916')
+const relativeV4ApiUrl = new RelativeV4ApiUrl('/v4/items/3696836')
+const absoluteV4ApiUrl = new AbsoluteV4ApiUrl('https://sierra.library.edu/iii/sierra-api/v4/items/3696836')
+----
+
+TIP: link:docs/record-id.asciidoc#parsing-a-string[More information]
+
+=== Parsing a record id string without knowing what kind of record id it is
+
+[source,js]
+----
+let unknownKind = RecordId.fromString('/v4/items/3696836')
+unknownKind instanceof RelativeV4ApiUrl // => true
+----
+
+TIP: link:docs/record-id.asciidoc#fromstring[More information]
+
+
+
+
+== Building a record id from its parts
+
+[source,js]
+----
+const virtualWeakRecordKey = new WeakRecordKey({
+    initialPeriod: true, recordTypeChar: 'i', recNum: 3696836, campusCode: 'abcde'
+})
+virtualWeakRecordKey.toString() // => '.i3696836@abcde'
+----
+
+TIP: link:docs/record-id.asciidoc#building-from-parts[More information]
+
+=== Deriving a record id from another of the same kind
+
+[source,js]
+----
+const itemRecord = new WeakRecordKey('i123456@abcde')
+const bibRecord = new WeakRecordKey({ ...itemRecord.parts, recordTypeChar: 'b' })
+bibRecord.toString() // => 'b123456@abcde'
+----
+
+Don't use this technique to convert a record id to another kind. For that, see
+link:#converting-a-record-id-into-another-kind[converting a record id into another kind].
+
+
+
+
+== Getting a record id's parts
+
+[source,js]
+----
+weakRecordKey1.parts
+// => { initialPeriod: false, recordTypeChar: 'i', recNum: 3696836, campusCode: null }
+
+virtualWeakRecordKey.parts
+// => { initialPeriod: true, recordTypeChar: 'i', recNum: 3696836, campusCode: 'abcde' }
+
+strongRecordKey2.parts
+// => { initialPeriod: true, recordTypeChar: 'i', recNum: 3696836, checkDigit: '5', campusCode: null }
+
+new AbsoluteV4ApiUrl('https://sierra.library.edu/iii/sierra-api/v4/items/3696836@abcde').parts
+// => { apiHost: 'sierra.library.edu', apiPath: '/iii/sierra-api/', apiRecordType: 'items',
+        recordTypeChar: 'i', recNum: 3696836, campusCode: 'abcde' }
+----
+
+The properties on the parts object depends on the kind of record id you have.
+
+You can access the individual parts directly.
+
+[source,js]
+----
+weakRecordKey1.initialPeriod // => false
+weakRecordKey1.recordTypeChar // => 'i'
+weakRecordKey1.recNum // => 3696836
+weakRecordKey1.campusCode // => null
+----
+
+CAUTION: A `RecordId` object should be immutable. Do not change the `parts` object.
+         If you want to change something, link:#deriving-a-record-id-from-another-of-the-same-kind[derive a new object]
+         or link:#converting-a-record-id-into-another-kind[convert to a new kind of record id].
+
+TIP: link:docs/record-id.asciidoc#parts[More information]
+
+
+
+
+== Formatting a record id as a string
+
+[source,js]
+----
+recordNumber.toString() // => '3696836'
+virtualWeakRecordKey.toString() // => '.i3696836@abcde'
+databaseId.toString() // => '450975262916'
+relativeV4ApiUrl.toString() // => '/v4/items/3696836'
+----
+
+`toString` won't always give you the same string as what you gave to the constructor.
+
+[source,js]
+----
+new RelativeV4ApiUrl('  /v4/items/3696836   ').toString() // => '/v4/items/3696836'
+----
+
+You can control if record keys have an initial period.
+
+[source,js]
+----
+weakRecordKey1.toString() // => 'i3696836' <1>
+weakRecordKey1.toString({ initialPeriod: false }) // => 'i3696836'
+weakRecordKey1.toString({ initialPeriod: true }) // => '.i3696836'
+
+weakRecordKey2.toString() // => '.i3696836' <2>
+weakRecordKey2.toString({ initialPeriod: false }) // => 'i3696836'
+weakRecordKey2.toString({ initialPeriod: true }) // => '.i3696836'
+----
+
+<1> Because `weakRecordKey1.initialPeriod` is `false`.
+<2> Becasue `weakRecordKey2.initialPeriod` is `true`.
+
+TIP: link:docs/record-id.asciidoc#tostring[More information]
+
+
+
+
+== Detecting the kind of a record id
+
+CAUTION: Take heed that detection is not validation.
+
+[source,js]
+----
+RecordId.detect('3696836') // => RecordNumber
+RecordId.detect('o324342') // => WeakRecordKey
+RecordId.detect('p12856435') // => StrongRecordKey
+RecordId.detect('563400925525721') // => DatabaseId
+RecordId.detect('/v4/items/3696836') // => RelativeV4ApiUrl
+RecordId.detect('https://sierra.library.edu/iii/sierra-api/v4/items/3696836') // => AbsoluteV4ApiUrl
+----
+
+Be careful of link:docs/record-id.asciidoc#ambiguous-record-keys[ambiguous record keys].
+
+[source,js]
+----
+RecordId.detect('i3696836') // throw an Error
+----
+
+TIP: link:docs/record-id.asciidoc#detect[More information]
+
+
+
+
+== Validating a record id
+
+Validation is optional in `sierra-record-id` because the validations can be computationally expensive.
+
+TIP: If you are getting record ids from untrusted sources or a human, you would be wise to call `validate`.
+
+[source,js]
+----
+strongRecordKey1.validate() // => strongRecordKey // <1>
+
+const badCheckDigit = new StrongRecordKey('i36968360') <2>
+badCheckDigit.validate() // <3>
+
+new WeakRecordKey('s3696836').validate() // <4>
+new WeakRecordKey('s3696836').validate({ apiCompatibleOnly: false }) // <5>
+new WeakRecordKey('s3696836').validate({ apiCompatibleOnly: true }) // <6>
+
+new StrongRecordKey('i36968360', { validate: true }) // <7>
+new StrongRecordKey('i36968360', { validate: { apiCompatibleOnly: true } }) // <8>
+----
+
+<1> Actually returns `this`.
+<2> Does *not* throw an error, because `StrongRecordKey` is able to parse the string.
+<3> Throws an error because the check digit is not valid for rec num 3696836.
+<4> Does not throw an error because it is a valid weak record key.
+<5> This is the same as 3, because `apiCompatibleOnly` defaults to `false`.
+<6> Throws an error because section records are not compatible with Sierra API, in that you cannot convert from a
+    weak record key for a section record to either a relative v4 api url or an absolute v4 api url.
+<7> This is equivalent to `new StrongRecordKey('i36968360').validate()`.
+<8> This is equivalent to `new StrongRecordKey('i36968360').validate({ apiCompatibleOnly: true })`.
+
+Because `validate` returns `this` if the record id is valid, you can chain another method after it.
+
+[source,js]
+----
+new StrongRecordKey('i36968365').validate().convertTo(AbsoluteV4ApiUrl)
+----
+
+TIP: link:docs/record-id.asciidoc#validate[More information]
+
+
+
+
+== Converting a record id into another kind
+
+=== Synchronous conversions
+
+[source,js]
+----
+function convertToDemo(weakRecordKey) {
+    const recordNumber = weakRecordKey.convertTo(RecordNumber)
+    const strongRecordKey = weakRecordKey.convertTo(StrongRecordKey)
+    const databaseId = weakRecordKey.convertTo(DatabaseId)
+    const relativeV4ApiUrl = weakRecordKey.convertTo(RelativeV4ApiUrl)
+    const absoluteV4ApiUrl = weakRecordKey.convertTo(AbsoluteV4ApiUrl)
+
+    weakRecordKey === weakRecordKey.convertTo(WeakRecordKey) // => true <1>
+
+    const backToWeakRecordKey = recordNumber.convertTo(WeakRecordKey, { recordTypeCode: 'b' }) <2>
+}
+----
+
+<1> Attempting to convert a record id into its own kind is efficient.
+<2> If you are converting from (but not to) a RecordNumber, you have to give a `recordTypeCode` option.
+
+TIP: link:docs/record-id.asciidoc#convertto[More information]
+
+=== Asynchronous conversions
+
+You must use `convertToAsync` when converting to or from a database id for a virtual record because of potential
+database access.
+
+[source,js]
+----
+function covertToAsyncDemo1(virtualWeakRecordKey) {
+    const databaseId = virtualWeakRecordKey.convertTo(DatabaseId) // <1>
+
+    virtualWeakRecordKey.convertToAsync(DatabaseId)
+        .then(databaseId => {
+            databaseId.toString() // => '1970745744342089' <2>
+        })
+}
+
+async function covertToAsyncDemo2() {
+    const recordId1 = new RelativeV4ApiUrl('/v4/items/3696836@abcde')
+    const databaseId = await recordId1.convertToAsync(DatabaseId)
+    const recordId2 = await databaseId.convertToAsync(RelativeV4ApiUrl)
+    recordId1.toString() === recordId2.toString() // => true
+}
+----
+
+<1> Throws an error because `convertTo` was used instead of `convertToAsync`.
+<2> This is just an example result. The actual result will vary between Sierra sites.
+
+CAUTION: `convertToAsync` has not been implemented yet. It is expect to be implemented by v1.0.
+
+TIP: link:docs/record-id.asciidoc#converttoasync[More information]
+
+
+
+
+== Additional setup
+
+=== Setup needed to work with database ids for virtual records
 
 If you need to converting to or from database ids for virtual records, you will need to set up access to the Sierra
 database. Follow the instruction on https://github.com/SydneyUniLibrary/sierra-db-as-promised#how-to-use[how to use sierra-db-as-promised].
-If you don't do this, then `sierra-record-id` will throw an error if you try to translate to or from the database id
-for a virtual record.
+If you don't do this, then `convertToAsync` will throw an error.
 
-
-== How to set up for Sierra API URLs
+=== Setup needed to work with absolute URLs to the Sierra API
 
 If you need to convert to absolute API URLs you will need to configure Sierra's host name. You do this in a way that is
 compatible with https://github.com/SydneyUniLibrary/sierra-api-as-promised[sierra-api-as-promised].
-In other words, if you have already set up `sierra-api-as-promised` you are already set up for using Sierra API URIs
+In other words, if you have already set up `sierra-api-as-promised` you are already set up for using Sierra API URLs
 with `sierra-record-id`.
 
 At a minimum, you need to set `SIERRA_API_HOST` in your process's environment.
 
-You can do that in any manner you choose. However if you create a `.env` file in the root directory of your project like
-the following, `sierra-record-id` will read it and set up your process's environment for you.
 
-[source]
-SIERRA_API_HOST=sierra.library.edu
-
-[NOTE]
-`SIERRA_API_HOST` needs to be the name of Sierra's application server, and not Sierra's database server.
-
-
-== Kinds of records id
-
-`sierra-record-id` uses the following terminology/nomenclature to refer to the different kinds of record id in Sierra.
-
-link:docs/kind.asciidoc[More details]
-
-[options="header"]
-|===
-| Term                | `RecordIdKind`        | Example            | Virtual record example
-| Record number       | `RECORD_NUMBER`       | `3696836`          | `587634@abcde`
-| Weak record key     | `WEAK_RECORD_KEY`     | `i3696836`         | `i587634@abcde`
-| Strong record key   | `STRONG_RECORD_KEY`   | `i36968365`        | `i5876345@abcde`
-| Database id         | `DATABASE_ID`         | `450975262916`     | `28192594886437`
-| Relative v4 API URL | `RELATIVE_V4_API_URL` | `v4/items/3696836` | `v4/items/587634@abcde`
-| Absolute v4 API URL
-| `ABSOLUTE_V4_API_URL`
-| `https://sierra.library.edu/iii/sierra-api/v4/items/3696836`
-| `https://sierra.library.edu/iii/sierra-api/v4/items/587634@abcde`
-|===
-
-There is an additional `RecordIdKind` not mention in the table above, which is `AMBIGUOUS_RECORD_KEY`.
-`detect` returns `AMBIGUOUS_RECORD_KEY` if it cannot determine if a record key is weak or strong.
 
 
 == License

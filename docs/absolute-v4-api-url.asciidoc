@@ -1,0 +1,178 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= AbsoluteV4ApiUrl
+
+toc::[]
+
+
+
+
+== Overview
+
+`class AbsoluteV4ApiUrl extends link:relative-v4-api-url.asciidoc[RelativeV4ApiUrl]`
+
+.Examples of absolute v4 API URL strings
+----
+https://sierra.library.edu/iii/sierra-api/v4/items/3696836
+https://sierra.library.edu/iii/sierra-api/v4/items/587634@abcde
+----
+
+
+
+
+== Parts
+
+[source,js]
+----
+type AbsoluteV4ApiUrl.Parts = {
+    apiHost: string,
+    apiPath: string,
+    recordTypeCode: string,
+    recNum: string,
+    campusCode = null: null | string
+}
+----
+
+[options="header"]
+|===
+| Part           | Description
+| apiHost        | The hostname of a Sierra application server.
+                   Defaults to `SIERRA_API_HOST` in the process's environment.
+| apiPath        | The path prefix for where the API exists on the Sierra application server.
+                   Defaults to `/iii/sierra-api/`, but that default can be overridden by
+                   `SIERRA_API_PATH` in the process's environment.
+| recordTypeCode | The 1 character code for the record type.
+| recNum         | The actual number part of the record id.
+| campusCode     | The 1-5 character code for a virtual record's campus/location.
+                   `null` if the record id isn't for a virtual record.
+                   Defaults to `null`.
+|===
+
+You get the parts of a absolute v4 API URL via the `parts` property, or you can get individual parts directly.
+
+[source,js]
+----
+const absoluteV4ApiUrl = new AbsoluteV4ApiUrl(''https://some.library/iii/sierra-api/v4/patrons/3696836'')
+absoluteV4ApiUrl.parts
+// => { apiHost: 'some.library', apiPath: '/iii/sierra-api/',
+//      recordTypeCode: 'p', recNum: '3696836', campusCode: null }
+absoluteV4ApiUrl.apiHost // => 'some.library'
+absoluteV4ApiUrl.apiPath // => '/iii/sierra-api/'
+absoluteV4ApiUrl.recordTypeCode // => 'p'
+absoluteV4ApiUrl.recNum // => '3696836'
+absoluteV4ApiUrl.campsuCode // => null
+----
+
+[source,js]
+----
+const absoluteV4ApiUrl = new AbsoluteV4ApiUrl('https://some.library/test/beta-api/v4/patrons/3696836@abcde')
+absoluteV4ApiUrl.parts
+// => { apiHost: 'some.library', apiPath: '/test/beta-api/',
+//      recordTypeCode: 'p', recNum: '3696836', campusCode: 'abcde' }
+absoluteV4ApiUrl.apiHost // => 'some.library'
+absoluteV4ApiUrl.apiPath // => '/test/beta-api/'
+absoluteV4ApiUrl.recordTypeCode // => 'p'
+absoluteV4ApiUrl.recNum // => '3696836'
+absoluteV4ApiUrl.campsuCode // => 'abcde'
+----
+
+CAUTION: The constructor for `AbsoluteV4ApiUrl` will not preprocess the URL. Particularly it will not decode %-encoded
+         characters.
+
+You can construct absolute v4 API URLs from parts.
+
+[source,js]
+----
+const absoluteV4ApiUrl = new AbsoluteV4ApiUrl({ recordTypeCode: 'n', recNum: '1044142' }) // <1>
+absoluteV4ApiUrl.parts
+// => { apiHost: 'some.library', apiPath: '/iii/sierra-api/',
+//      recordTypeCode: 'n', recNum: '1044142', campusCode: null }
+absoluteV4ApiUrl.toString() // => 'https://some.library/iii/sierra-api/v4/invoices/1044142'
+----
+
+<1> Assuming `SIERRA_API_HOST` is set to `'some.library'` in the process's environment,
+    and `SIERRA_API_PATH` is either not set or set to `'/iii/sierra-api/'`.
+
+[source,js]
+----
+const absoluteV4ApiUrl =
+    new AbsoluteV4ApiUrl({ apiHost: 'test.uni.edu', apiPath: '/experimental/',
+                           recordTypeCode: 'p', recNum: '3696836', campusCode: 'abcde' }) // <1>
+absoluteV4ApiUrl.parts
+// => { apiHost: 'test.uni.edu', apiPath: '/experimental/',
+//      recordTypeCode: 'p', recNum: '3696836', campusCode: 'abcde' }
+absoluteV4ApiUrl.toString() // => 'https://test.uni.edu/experimental/v4/patrons/3696836@abcde'
+----
+
+<1> Because `apiHost` and `apiPath` parts are given, neither `SIERRA_API_HOST` nor `SIERRA_API_PATH` have any effect.
+
+The constructor for `AbsoluteV4ApiUrl` will throw an error when you are constructing an absolute v4 API URL from parts,
+and you neither give an `apiHost` part nor set `SIERRA_API_HOST` in the process's environment.
+
+The constructor for `AbsoluteV4ApiUrl` will throw an error if you give it an incompatible record type code.
+
+[source,js]
+----
+new AbsoluteV4ApiUrl({ recordTypeCode: 's', recNum: '1044142' }) // <1>
+----
+
+<1> Throws an error because the Sierra API doesn't have an endpoint for Program Registration section records.
+
+
+
+
+== Converting
+
+When converting to an absolute V4 API URL, you can give `apiHost` and/or `apiPath` options. These will be become the
+`apiHost` and/or `apiPath` parts of the resulting absolute v4 API URL.
+
+If you don't give an `apiHost` option, the `apiHost` part will be whatever `SIERRA_API_HOST` is set to in the process's
+environment. If `SIERRA_API_HOST` is not set, `convertTo` will throw an error.
+
+If you don't give an `apiPath` option, the `apiPath` part will be whatever `SIERRA_API_PATH` is set to in the process's
+environment. If `SIERRA_API_PATH` is not set, `apiPath` becomes `/iii/sierra-api/`.
+
+`convertTo` with throw an error if you try to convert from a record id that does not have an API-compatible record type
+code.
+
+TIP: link:record-id.asciidoc#convertto[More information]
+
+
+
+
+== Stringifying
+
+Template for non-virtual record ids: `https://${apiHost}${apiPath}v4/${apiRecordType}/${recNum}`
+
+Template for virtual record ids: `https://${apiHost}${apiPath}v4/${apiRecordType}/${recNum}@${campusCode}`
+
+`AbsoluteV4ApiUrl` converts the `recordTypeCode` part into `apiRecordType`.
+
+TIP: link:record-id.asciidoc#tostring[More information]
+
+
+
+
+== Validation
+
+[options="header"]
+|===
+| Part           | Validation
+| apiHost        | It ia a legal URL hostname.
+| apiPath        | It is a legal URL path. It starts and ends with a forward slash. There are no consecutive forward slashes.
+| recordTypeCode | Is a valid, api-compatible record type code.
+| recNum         | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| campusCode     | If not null, is 1-5 alphanumeric characters.
+|===
+
+TIP: link:record-id.asciidoc#validate[More information]

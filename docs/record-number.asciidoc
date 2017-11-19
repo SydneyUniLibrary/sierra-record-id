@@ -1,0 +1,174 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= RecordNumber
+
+toc::[]
+
+
+== Overview
+
+`class RecordNumber extends link:record-id.asciidoc[RecordId]`
+
+.Examples of record number strings
+----
+164905
+1666521
+560184@fh
+1462119@9qut0
+----
+
+* Record numbers are ambiguous by themselves, because they do not identify the record type. If you want to translate
+  from a record number, you will need to specify which type of record it is.
+
+* Sometimes the term record number in Sierra's documentation actually means what `sierra-record-id` calls
+  link:weak-record-key.asciidoc[a weak record key] or a link:strong-record-key.asciidoc[a strong record key].
+
+* A record number is called a record id in the Sierra API documentation. Although sometimes Sierra produces a record id
+  that is actually link:absolute-v4-api-url.asciidoc[an absolute v4 API URL].
+
+
+
+== Parts
+
+[source,js]
+----
+type RecordNumber.Parts = {
+    recNum: string,
+    campusCode = null: null | string
+}
+----
+
+[options="header"]
+|===
+| Part       | Description
+| recNum     | The actual number part of the record id.
+| campusCode | The 1-5 character code for a virtual record's campus/location.
+               `null` if the record id isn't for a virtual record.
+               Defaults to `null`.
+|===
+
+You get the parts of a record number via the `parts` property, or you can get individual parts directly.
+
+[source,js]
+----
+const recordNumber = new RecordNumber('3696836')
+recordNumber.parts // => { recNum: '3696836', campusCode: null }
+recordNumber.recNum // => '3696836'
+recordNumber.campsuCode // => null
+----
+
+[source,js]
+----
+const recordNumber = new RecordNumber('587634@abcde')
+recordNumber.parts // => { recNum: '587634', campusCode: 'abcde' }
+recordNumber.recNum // => '587634'
+recordNumber.campsuCode // => 'abcde'
+----
+
+You can construct record numbers from parts.
+
+[source,js]
+----
+const recordNumber = new RecordNumber({ recNum: '3696836' })
+recordNumber.parts // => { recNum: '3696836', campusCode: null }
+recordNumber.toString() // => '3696836'
+----
+
+[source,js]
+----
+const recordNumber = new RecordNumber({ recNum: '587634', campusCode: 'abcde' })
+recordNumber.parts // => { recNum: '587634', campusCode: 'abcde' }
+recordNumber.toString() // => '587634@abcde'
+----
+
+
+
+== Converting
+
+=== From a record number
+
+Because a record number does not have a record type char, you have to give a `recordTypeCode` option when converting
+from a `RecordNumber`.
+
+[source,js]
+----
+new RecordNumber('587634@abcde').convertTo(WeakRecordKey, { recordTypeCode: 'p' }).toString()
+// => 'p587634@abcde'
+
+new RecordNumber('587634@abcde').convertTo(WeakRecordKey) <1>
+----
+
+<1> Throws an error because the `recordTypeCode` options is missing.
+
+TIP: link:record-id.asciidoc#convertto[More information]
+
+
+=== To a record number
+
+You will loose the record type code when converting to a record number. This means you cannot simply convert back
+and forth between record numbers, like you can with other kinds of record id.
+
+[source,js]
+----
+(
+    new WeakRecordKey('i587634@abcde')
+        .convertTo(StrongRecordKey)
+        .convertTo(WeakRecordKey) // <1>
+)
+
+(
+    new WeakRecordKey('i587634@abcde')
+        .convertTo(RecordNumber)
+        .convertTo(WeakRecordKey) // <2>
+)
+
+(
+    new WeakRecordKey('i587634@abcde')
+        .convertTo(RecordNumber)
+        .convertTo(WeakRecordKey, { recordTypeCode: 'i' }) // <3>
+)
+----
+
+<1> This will succeed and you will end up at a weak record key equivalent to the one you started with.
+<2> This will result in an error being thrown because once you have converted to a record number, you loose the fact
+    that you started with a weak record key for an item record.
+<3> This will succeed because it supplies the record type code needed to convert from a record number.
+
+TIP: link:record-id.asciidoc#convertto[More information]
+
+
+
+
+== Stringifying
+
+Template for non-virtual record ids: `${recNum}`
+
+Template for virtual record ids: `${recNum}@${campusCode}`
+
+TIP: link:record-id.asciidoc#tostring[More information]
+
+
+
+
+== Validation
+
+[options="header"]
+|===
+| Part       | Validation
+| recNum     | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| campusCode | If not null, is 1-5 alphanumeric characters.
+|===
+
+There are no options when validating a record number.
+
+TIP: link:record-id.asciidoc#validate[More information]

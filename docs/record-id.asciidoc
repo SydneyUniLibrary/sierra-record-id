@@ -1,0 +1,411 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= RecordId
+
+toc::[]
+
+
+
+== Overview
+
+`RecordId` is the abstract base class that starts the class hierarchy for `sierra-record-id`.
+
+NOTE: `sierra-record-id` uses the term record id as an umbrella term to mean any of the specific kinds of record id it
+supports.
+
+TIP: The information here is somewhat generic and may not give you all the information for a specific kind of record id.
+     The documentation for kind of record id are dealing with will have specific details.
+
+=== Classes
+
+* RecordId
+** link:record-number.asciidoc[RecordNumber]
+** link:weak-record-key.asciidoc[WeakRecordKey]
+*** link:strong-record-key.asciidoc[StrongRecordKey]
+** link:database-id.asciidoc[DatabaseId]
+** link:relative-v4-api-url.asciidoc[RelativeV4ApiUrl]
+*** link:absolute-v4-api-url.asciidoc[AbsoluteV4ApiUrl]
+
+
+
+== Constructor
+
+CAUTION: You can't actually create a `RecordId` object itself. You need to create an object from one of the `RecordId`
+         subclasses.
+
+
+=== Parsing a string
+
+[source,js]
+constructor(recordIdString: string, options?: { validate = false: boolean | object })
+
+[options="header"]
+|===
+| Parameter        | Description
+| recordIdString   | A string being the record id you want to parse.
+                     The record id can be for a virtual record.
+                     The string can have leading and/or trailing whitespace, which the constructor will ignore.
+| options.validate | If true, the constructor will call `validate` on the new object for you.
+                     If you give an object, the constructor will pass the object when it calls `validate`.
+|===
+
+Calls the static `_parse` function of the actual subclass being constructed with the `recordIdString` as an argument.
+The result of `_parse` becomes the new object's `parts` property.
+
+CAUTION: The constructors don't do much validation. If the string you give it looks like a record id and it can break
+         the string apart, it will and will return an object. Just because you get an object doesn't mean the record id
+         you gave was valid. You must call the `validate` method if you want to be sure the record id is valid.
+
+
+=== Building from parts
+
+[source,js]
+constructor(parts: object, options?: { validate: boolean | object })
+
+[options="header"]
+|===
+| Parameter        | Description
+| parts            | An object with the parts of the record id already separated as individual properties.
+| options.validate | If true, the constructor will call `validate` for you.
+                     If you give an object, the constructor will pass the object as the options to `validate`.
+|===
+
+Calls the static `_normaliseParts` function on the actual subclass being constructed. `_normaliseParts` checks that
+required parts are present and sets optional parts to their default values if they are missing. The results of
+`_normaliseParts` becomes the new object's `parts` property.
+
+CAUTION: The constructor does not copy the object you give as the `parts` parameter. It may change that object. Do not
+         change the object after calling the constructor.
+
+
+
+== Properties
+
+
+=== parts
+
+[source,js]
+readonly parts: object
+
+Gets an object with the individual parts of the record id. What properties you can expect on the parts objects depends
+on the kind of record id you have. See the specific subclass documentation for details.
+
+CAUTION: Treat a `RecordId` object as being read-only. Do not change the `parts` object. Do not re-assign the `parts`
+         property. Do not re-assign any of the individual properties on the `parts` object.
+
+NOTE: If you got the record id by converting from another record id, the `parts` object may have more properties than
+      those that are documented. Don't count on those extra properties being there. They are not a part of the API and
+      note be there in a later versions.
+
+TIP: The `RecordId` subclasses provide getters for the expected parts. You should use those instead of using the parts
+     property.
+
+
+
+== Methods
+
+
+=== convertTo
+
+[source,js]
+convertTo<T extends RecordId>(to: Class<T>, options?: object): T
+
+[options="header"]
+|===
+| Parameter | Description
+| to        | The class of the kind of record id you want to convert to. This needs to be one of the constants exported
+              from `@sydneyunilibrary/sierra-record-id`. You can't give a string or a symbol.
+| options   | Depending on the kind of record id you are converting to, there may be options you have to give in order
+              to control how the record id converts. See the class documentation for the specific kind of record id you
+              are converting to for details.
+|===
+
+Returns an object that refers to the same record, but using the different kind of record id.
+
+Attempting to convert a record id into its own kind is efficient. `convertTo` will avoid doing a conversion and will
+simply return `this`.
+
+Throws an Error if:
+
+* the `to` parameter is invalid
+* there is a required option that is missing
+* an option is invalid
+* you are trying to use `convertTo` instead of link:#converttoasync[`convertToAsync`] to convert to or from a database
+  id for a virtual record.
+
+CAUTION: You cannot use `convertTo` when converting to or from a database id for a virtual record.
+         You must use link:#converttoasync[`convertToAsync`] in this situation because of the potential database access.
+         If you try to use `convertTo`, it will throw an error.
+
+WARNING: By default you will actually get a weak record key when you convert a record id for a virtual record to a
+         strong record key. See the documentation for `StrongRecordKey` for more details.
+
+
+
+=== convertToAsync
+
+CAUTION: `convertToAsync` has not been implemented yet. It is expect to be implemented by v1.0.
+
+[source,js]
+convertToAsync<T extends RecordId>(to: Class<T>, options?: object): Promise<T>
+
+[options="header"]
+|===
+| Parameter | Description
+| to        | The class of the kind of record id you want to convert to. This needs to be one of the constants exported
+              from `@sydneyunilibrary/sierra-record-id`. You can't give a string or a symbol.
+| options   | Depending on the kind of record id you are converting to, there may be options you have to give in order
+              to control how the record id converts. See the class documentation for the specific kind of record id you
+              are converting to for details.
+|===
+
+`convertToAsync` is the same as link:#convertto[`convertTo`] except it potentially does the conversion asynchronously.
+It returns a link:https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise[Promise] that
+will eventually be fulfilled with the kind of record id you want.
+
+In reality, `convertToAsync` will only do the conversion asynchronously when converting to or from a database id for a
+virtual record, and only is then will it returned a Promise that is not already fulfilled. This is because it needed to
+lookup the correlation between `campusCode` and `campusId` in the Sierra database.
+
+In all the other conversion scenarios, `convertToAsync` can do the conversion synchronously and so will return a Promise
+that is already fulfilled.
+
+It may also be abe to do the conversion synchronously if it has already looked up the correlation between the
+`campusCode` and `campusId` parts in the database and the correlation is still in the
+link:database-id.asciidoc#lookup-cache[lookup cache].
+
+`convertToAsync` will not throw an error directly. It will always return a Promise. Instead of throwing an error, the
+Promise `convertToAsync` returns will become rejected.
+
+The promise `convertToAsync` returns will become rejected if:
+
+* the `to` parameter is invalid
+* there is a required option that is missing
+* an option is invalid
+* you haven't done link:../README.asciidoc#setup-needed-to-work-with-database-ids-for-virtual-records[the setup needed
+  to work with database ids for virtual records]
+* there are errors while trying to query the Sierra database
+* there is no correlation between the `campusCode` and the `campusId`, meaning either doesn't exist in this Sierra site.
+
+WARNING: There is link:../README.asciidoc#setup-needed-to-work-with-database-ids-for-virtual-records[setup you need to
+         do in order to work with database ids for virtual records].
+
+
+
+=== toString
+
+[source,js]
+toString(options?: object): string
+
+[options="header"]
+|===
+| Parameter              | Description
+| options                | Depending on the kind of record id, there may be options to control how the record id becomes
+                           a string. See the class documentation for the kind of record id you have for details.
+|===
+
+Builds a string version of (stringifies) the record id. The string version is typically what an end user would see or
+what a database or network endpoint would expect.
+
+Constructing a record id from a string and then calling `toString` would generally give you the same string,
+disregarding any leading or training whitespace and other possibly normalisations.
+
+Calling `toString` could be expensive the first time, but should be very cheap on subsequent calls on the same object.
+
+`toString` will not throw if you do not give any options. It can throw if you give an options and one of the options is
+invalid.
+
+
+
+=== validate
+
+[source,js]
+validate(options?: object): this
+
+[options="header"]
+|===
+| Parameter              | Description
+| options                | Depending on the kind of record id, there may be options to control how the record id is
+                           validated. See the class documentation for the kind of record id you have for details.
+|===
+
+`validate` returns `this` if the record id is valid, otherwise it throws an error.
+
+`validate` does *not* check if there is actually a record with this record id in any system. It only checks that the
+record id would not be rejected by a system for reasons other than the record not actually existing.
+
+See the class documentation for kind of record id you are validating for details on what is checked.
+
+CAUTION: Validation is optional in `sierra-record-id` because the validations can be computationally expensive.
+         If you are getting record ids from untrusted sources or a human, you would be wise to call `validate`.
+         But avoid calling it multiple times for the same object.
+
+TIP: Because `validate` returns `this` if the record id is valid, you can chain another method after it.
+
+
+
+== Static functions
+
+
+=== detect
+
+[source,js]
+RecordId.detect<T extends RecordId>(recordIdString: string): class<T>
+
+[options="header"]
+|===
+| Parameter      | Description
+| recordIdString | A String with the record id you want to detect.
+                   The record id can be for a virtual record.
+                   Record keys can optionally have an initial period.
+                   The string can have leading and/or trailing whitespace, which `RecordId.detect` will ignore.
+|===
+
+Detects the kind of record id you have. Returns the class (constructor function) that could be used to parse it.
+
+Throw an Error if:
+
+* `recordIdString` is not a string or is an empty string,
+* the string is not a kind of record id that `sierra-record-id` supports or it is an invalid record id,
+* or the record is is an ambiguous record key (see below).
+
+CAUTION: Take heed that detection is not validation. If you give `RecordId.detect` a string that is not a valid record
+         id, it could incorrectly detect it. Do not rely on `RecordId.detect` throwing an error for invalid record ids.
+         Similarly do not assume `detect` not throwing an error means the record id is valid.
+
+TIP: You can detect a database id without having set up `sierra-db-as-promised`.
+     You can also detect an absolute API URL without having set up `SIERRA_API_HOST`.
+
+TIP: `RecordId.detect` only detects the kind of the record id. Use `RecordId.fromString` if you want to detect and parse it.
+
+NOTE: `RecordId.detect` returns an ES6 class, which is equivalent to an pre-ES6 constructor function.
+      Don't expect a string or a symbol.
+
+NOTE: You can compare (using `===`) the result of `RecordId.detect` to one of the constants exported from
+      `@sydneyunilibrary/sierra-record-id` like `WeakRecordKey` and `RelativeV4ApiUrl` if you want to act on the result.
+
+==== Ambiguous record keys
+
+Because record numbers can be 6 or 7 digits, `i3696836` is ambiguous. It could be a weak record key for the 7 digit
+record number `3696836`, or it could be a strong key for the 6 digit record number `369683` with the final `6` being the
+check digit.
+
+If you give `RecordId.detect` an ambiguous record key it will throw an error.
+
+The previous paragraphs notwithstanding, if the key for a 6 digit record number has an `x` check digit
+(for example `o100007x`), `RecordId.detect` will detect it as being strong and will not throw an error.
+
+==== Detecting a record id's kind
+
+`RecordId.detect` detects the kind of the record id as follows (in order, after trimming whitespace):
+
+. If the id starts with `.`, then it is a record key and `RecordId.detect` calls `detectRecordKeyStrength`.
+. If the id starts with `https://` and contains `/v4/`, then it is an absolute v4 API URL.
+. If the id starts with `/v4/`, then it is a relative v4 API URL.
+. If the id starts with a letter, then it is a record key and `RecordId.detect` calls `detectRecordKeyStrength`.
+. If the id is a string 12 or more digits, then it is a database id.
+. If the id starts with a digit, then it is a record number.
+. Otherwise the kind of the record id is unknown and `RecordId.detect` throws an Error.
+
+==== Detecting the strength of a record key
+
+`detectRecordKeyStrength` (which `RecordId.detect` calls) detects the strength of a record key as follows:
+
+. `detectRecordKeyStrength` strips that off any virtual record part (like `@abcde`), any initial period,
+  and the record type code.
+. If what's left ends in `x`, then the record key is strong.
+. If what's left is a string of 6 digits, then the record key is weak.
+. If what's left is a string of 7 digits, then the record key is ambiguous.
+. If what's left is a string of 8 digits, then the record key is strong.
+. Otherwise the record key is actually invalid and `detectRecordKeyStrength` throws an Error.
+
+
+=== fromString
+
+[source,js]
+RecordId.fromString<T extends RecordId>(recordIdString: string): T
+
+[options="header"]
+|===
+| Parameter      | Required | Description
+| recordIdString | Yes      | A String with the record id you want to detect and parse.
+|===
+
+Use `RecordId.fromString` if you don't know what kind of record id you have. It will detect the kind of record id you
+gave it and give you an appropriate object.
+
+Detects the kind of record id you have and parses it. Calls `RecordId.detect` and then calls the resulting constructor.
+Returns an record id object appropriate for the kind of record id string you have.
+
+`RecordId.fromString` will throw an error if you give it an ambiguous record key. See `RecordId.detect` for information
+on ambiguous record keys.
+
+If `RecordId.fromString` can't detect what kind of record id you gave it, it will throw an error. But be careful about
+giving `RecordId.fromString` random strings. If something looks like a record id then `RecordId.fromString` may detect
+it incorrectly and create create an record id object even if it would make an invalid record id.
+
+CAUTION: `RecordId.fromString` replies on `RecordId.detect` and the constructors on the `RecordId` subclasses.
+         None of these do much validation. If they can succeed they will, even with invalid record ids.
+
+TIP: Call `validate` on the result of `fromString` if you need to assure yourself that the record id you have is valid.
+
+TIP: See `RecordId.detect` for more details on the `recordIdString` parameter and when errors are thrown.
+     Also see the errors thrown by the constructors for each of the `RecordId` subclasses.
+
+
+
+== Subclassing
+
+* Create a new module in the `lib` directory and a new test file in `test` directory.
+
+* Create a new class that extends `RecordId`. Export your class, and only your class, from your module.
+  Do not export it as the default object.
+
+* Amend index.js to import/require your module.
+
+* Do not provide your own constructor.
+
+* Provide a static `_parse` function that takes a string and returns a parts object. This function should be as cheap as
+  possible.Don't do validation in `_parse`. If you can parse the string at all, do so. Only throw an Error if you cannot
+  parse the string at all. However don't go to extraordinary lengths and/or use computationally expensive methods in
+  order to parse an invalid string.
+
+* Provide a static `_normaliseParts` function that throws if required parts are missing and sets optional, missing parts
+  to their default values. Don't do validation in `_normaliseParts`. This function should be as cheap as possible.
+  Don't copy the parts object; just mutate it.
+
+* Override `toString` to stringify the record id. Strongly consider using a memoise pattern to optimise repeated
+  `toString` calls.
+
+* Override `validate` to check if the record id is valid. Return `this` if it is valid. Throw an Error if it is not.
+  This method can be expensive. But do not reach out to databases or networks in order to check if a record with the id
+  actually exists. See `lib/record-id.js` because `RecordId` has some private methods that can validate some common
+  parts.
+
+* Provide a https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toStringTag[`Symbol.toStringTag`]
+  getter that returns the name of your new class as a string.
+
+* Provide convenient shortcut getters for the properties you expect the parts object to have.
+
+* Write tests for detecting your new kind of record id and then update `RecordId.detect`.
+
+* Optionally, provide a static `_convertFrom` function if you need to customise how objects for your new kind of record
+  id are created when they are converted *from* other kinds of record id. If you don't provide a static `_convertFrom`
+  function, the parts object from the other kind of record id will be passed to your constructor as is.
+  See `DatabaseId._convertFrom` for an example.
+
+* Optionally, override `convertTo` if you need to customise how objects for you new kind of record id are converted
+  *to* other kinds of record id. If you don't override `convertTo`, your parts object will be passed to the constructor
+  of the other kind of record id as is. See `DatabaseId.convertTo` for an example.
+
+TODO: `convertToAsync`

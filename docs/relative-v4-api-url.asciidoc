@@ -1,0 +1,167 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= RelativeV4ApiUrl
+
+toc::[]
+
+
+
+
+== Overview
+
+`class RelativeV4ApiUrl extends link:record-id.asciidoc[RecordId]`
+
+.Examples of relative v4 API URL strings
+----
+/v4/authorities/1316635
+/v4/bibs/526894
+/v4/bibs/3434098
+/v4/bibs/551912@mdill
+/v4/bibs/1792259@9woll
+/v4/invoices/1044142
+/v4/items/118287
+/v4/items/2385255
+/v4/items/537251@nrill
+/v4/items/5532493@9umel
+/v4/orders/314855
+/v4/orders/1321154
+/v4/patrons/210978
+/v4/patrons/1351172
+/v4/patrons/352099@9unew
+/v4/patrons/1024815@9umel
+----
+
+
+
+
+== Parts
+
+[source,js]
+----
+type RelativeV4ApiUrl.Parts = {
+    recordTypeCode: string,
+    recNum: string,
+    campusCode = null: null | string
+}
+----
+
+[options="header"]
+|===
+| Part           | Description
+| recordTypeCode | The 1 character code for the record type.
+| recNum         | The actual number part of the record id.
+| campusCode     | The 1-5 character code for a virtual record's campus/location.
+                   `null` if the record id isn't for a virtual record.
+                   Defaults to `null`.
+|===
+
+You get the parts of a relative v4 API URL via the `parts` property, or you can get individual parts directly.
+
+[source,js]
+----
+const relativeV4ApiUrl = new RelativeV4ApiUrl('/v4/authorities/1316635')
+relativeV4ApiUrl.parts // => { recordTypeCode: 'a', recNum: '1316635', campusCode: null }
+relativeV4ApiUrl.recordTypeCode // => 'a'
+relativeV4ApiUrl.recNum // => '1316635'
+relativeV4ApiUrl.campsuCode // => null
+----
+
+[source,js]
+----
+const relativeV4ApiUrl = new RelativeV4ApiUrl('/v4/patrons/1024815@9umel')
+relativeV4ApiUrl.parts
+relativeV4ApiUrl.parts // => { recordTypeCode: 'p', recNum: '1024815', campusCode: '9umel' }
+relativeV4ApiUrl.recordTypeCode // => 'p'
+relativeV4ApiUrl.recNum // => '1024815'
+relativeV4ApiUrl.campsuCode // => '9umel'
+----
+
+CAUTION: The constructor for `RelativeV4ApiUrl` will not preprocess the URL. Particularly it will not decode %-encoded
+         characters.
+
+You can construct relative v4 API URLs from parts.
+
+[source,js]
+----
+const relativeV4ApiUrl = new RelativeV4ApiUrl({ recordTypeCode: 'n', recNum: '1044142' })
+relativeV4ApiUrl.parts // => { recordTypeCode: 'n', recNum: '1044142', campusCode: null }
+relativeV4ApiUrl.toString() // => '/v4/invoices/1044142'
+----
+
+[source,js]
+----
+const relativeV4ApiUrl = new RelativeV4ApiUrl({ recordTypeCode: 'b', recNum: '1792259', campusCode: '9woll' })
+relativeV4ApiUrl.parts // => { recordTypeCode: 'b', recNum: '1792259', campusCode: '9woll' }
+relativeV4ApiUrl.toString() // => '/v4/bibs/1792259@9woll'
+----
+
+The constructor for `RelativeV4ApiUrl` will throw an error if you give it an incompatible record type code.
+
+[source,js]
+----
+new RelativeV4ApiUrl({ recordTypeCode: 's', recNum: '1044142' }) // <1>
+----
+
+<1> Throws an error because the Sierra API doesn't have an endpoint for Program Registration section records.
+
+
+=== Record type codes and API record types
+
+The `items` part of `/v4/items/118287` is an API record type.
+
+In order to make the parts of a relative v4 API URL consistent with the parts of other kinds of record id,
+`RelativeV4ApiUrl` works with `recordTypeCode` parts instead of API record type parts.
+
+When `RelativeV4ApiUrl` parses a relative v4 API URL string, it converts the API record type into a record type
+code. And when it produces a string, it converts the record type code into an API record type.
+
+
+
+
+== Converting
+
+There are no options when converting either to or from a relative v4 API URL.
+
+`convertTo` with throw an error if you try to convert from a record id that does not have an API-compatible record type code.
+
+TIP: link:record-id.asciidoc#convertto[More information]
+
+
+
+
+== Stringifying
+
+Template for non-virtual record ids: `/v4/${apiRecordType}/${recNum}`
+
+Template for virtual record ids: `/v4/${apiRecordType}/${recNum}@${campusCode}`
+
+`RelativeV4ApiUrl` converts the `recordTypeCode` part into `apiRecordType`.
+
+TIP: link:record-id.asciidoc#tostring[More information]
+
+
+
+
+== Validation
+
+[options="header"]
+|===
+| Part           | Validation
+| recordTypeCode | Is a valid, api-compatible record type code.
+| recNum         | Is 6 or 7 digits and doesn't have any zeros before the first non-zero.
+| campusCode     | If not null, is 1-5 alphanumeric characters.
+|===
+
+There are no options when validating a relative v4 API URL.
+
+TIP: link:record-id.asciidoc#validate[More information]

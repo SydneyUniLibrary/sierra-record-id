@@ -18,13 +18,19 @@
 'use strict'
 
 
-module.exports = Object.assign(
-  {},
-  require('./lib/convert'),
-  require('./lib/convert-async'),
-  require('./lib/detect'),
-  require('./lib/kind'),
-  require('./lib/make'),
-  require('./lib/parse'),
-  require('./lib/validate'),
-)
+module.exports = {
+  ...require('./lib/record-id'),
+  ...require('./lib/record-number'),
+  ...require('./lib/weak-record-key'),
+  ...require('./lib/strong-record-key'),
+  ...require('./lib/database-id'),
+  ...require('./lib/relative-v4-api-url'),
+  ...require('./lib/absolute-v4-api-url'),
+}
+
+
+/*
+ Separated out to resolve cyclic dependency between RecordId and its subclasses.
+ Defines RecordId.detect
+*/
+require('./lib/record-id-detect')
