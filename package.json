@@ -1,6 +1,6 @@
 {
   "name": "@sydneyunilibrary/sierra-record-id",
-  "version": "0.1",
+  "version": "0.2.0",
   "description": "Makes, parses, converts and validates the various kinds of Sierra record ids.",
   "license": "GPL-3.0",
   "main": "index.js",
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@sydneyunilibrary/sierra-record-check-digit": "github:SydneyUniLibrary/sierra-record-check-digit#v1.1",
-    "big-integer": "^1.6.25"
+    "big-integer": "^1.6.26"
   },
   "devDependencies": {
     "chai": "*",
