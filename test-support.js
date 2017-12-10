@@ -125,13 +125,20 @@ const CHECK_DIGIT = jsv.elements([ '0', '1', '2', '3', '4', '5', '6', '7', '8', 
 const ALL_RECORD_TYPE_CODE = jsv.elements([ 'b', 'o', 'i', 'c', 'a', 'p', 'r', 'n', 'v', 'e', 'l', 't', 'j' ])
 const API_COMPATIBLE_TYPE_CODE = jsv.elements([ 'a', 'b', 'n', 'i', 'o', 'p' ])
 const V4_API_RECORD_TYPES = jsv.elements(['authorities', 'bibs', 'invoices', 'items', 'orders', 'patrons'])
+const V5_API_RECORD_TYPES = jsv.elements(['authorities', 'bibs', 'invoices', 'items', 'orders', 'patrons'])
 
 const CAMPUS_CODE = (
   _arbitraryFromGenerator(_variableSizeArrayGenerator(1, 5, LOWER_ALPHA_DIGIT_CHAR.generator).map(_1 => _1.join('')))
 )
 
 const API_HOST = (
-  jsv.nearray(jsv.elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~".split('')))
+  jsv.suchthat(
+    jsv.nearray(jsv.elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~".split(''))),
+    _1 => (
+      // Don't generate hostname that potentially look like API versions
+      _1[0] !== 'v'
+    )
+  )
   .smap(_1 => _1.join(''), _1 => _1.split(''))
 )
 
@@ -143,6 +150,8 @@ const API_PATH = (
       _1.length !== 1 &&
       // Don't generate paths that start with a forward slash
       _1[0] !== '/' &&
+      // Don't generate paths that potentially look like API versions
+      _1[0] !== 'v' &&
       // Don't generate paths that contain consecutive forward slashes
       !_1.reduce((acc, val, idx, arr) => acc || (val === '/' && arr[idx + 1] === '/'), false)
     )
@@ -350,6 +359,19 @@ function arbitraryAbsoluteV4ApiUrl({ size = undefined, virtual = SOMETIMES, sier
 }
 
 
+function arbitraryRelativeV5ApiUrl({ size = undefined, virtual = SOMETIMES } = {}) {
+  return _joinArbitraries('/', jsv.constant('/v5'), V5_API_RECORD_TYPES, arbitraryRecordNumber({ size, virtual }))
+}
+
+
+function arbitraryAbsoluteV5ApiUrl({ size = undefined, virtual = SOMETIMES, sierraApiHost = undefined, sierraApiPath = undefined } = {}) {
+  const arbitraryHost = sierraApiHost === undefined ? API_HOST : jsv.constant(sierraApiHost)
+  const arbitraryPath = sierraApiPath === undefined ? API_PATH : jsv.constant(sierraApiPath)
+  return _joinArbitraries('', jsv.constant('https://'), arbitraryHost, arbitraryPath, jsv.constant('v5/'),
+                              V5_API_RECORD_TYPES, jsv.constant('/'), arbitraryRecordNumber({ size, virtual }))
+}
+
+
 const _WHITESPACE = jsv.elements([ '\f', '\n', '\r', '\t', '\v' ])
 
 function arbitraryWhitespaceString({ minLength = 0, maxLength = 50 } = {}) {
@@ -378,6 +400,7 @@ module.exports = {
     ALL_RECORD_TYPE_CODE,
     API_COMPATIBLE_TYPE_CODE,
     V4_API_RECORD_TYPES,
+    V5_API_RECORD_TYPES,
     CAMPUS_CODE,
     API_HOST,
     API_PATH,
@@ -393,6 +416,8 @@ module.exports = {
     databaseId: arbitraryDatabaseId,
     relativeV4ApiUrl: arbitraryRelativeV4ApiUrl,
     absoluteV4ApiUrl: arbitraryAbsoluteV4ApiUrl,
+    relativeV5ApiUrl: arbitraryRelativeV5ApiUrl,
+    absoluteV5ApiUrl: arbitraryAbsoluteV5ApiUrl,
 
     whitespaceString: arbitraryWhitespaceString,
 

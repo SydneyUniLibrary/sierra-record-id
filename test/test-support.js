@@ -544,4 +544,137 @@ describe('test-support arbitrary', function () {
 
   })
 
+
+  //---------------------------------------------------------------------------
+
+
+  describe('relativeV5ApiUrl', function () {
+
+    chaiProperty(
+      'defaults',
+      arbitrary.relativeV5ApiUrl(),
+      id => expect(id).to.match(/^\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+    )
+
+    chaiProperty(
+      'virtual never',
+      arbitrary.relativeV5ApiUrl({ virtual: arbitrary.NEVER }),
+      id => expect(id).to.match(/^\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
+    )
+
+    chaiProperty(
+      'virtual always',
+      arbitrary.relativeV5ApiUrl({ virtual: arbitrary.ALWAYS }),
+      id => expect(id).to.match(/^\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}@[a-z0-9]{1,5}$/)
+    )
+
+    chaiProperty(
+      'virtual sometimes',
+      arbitrary.relativeV5ApiUrl({ virtual: arbitrary.SOMETIMES }),
+      id => expect(id).to.match(/^\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+    )
+
+    chaiProperty(
+      'size 6',
+      arbitrary.relativeV5ApiUrl({ size: 6 }),
+      id => expect(id).to.match(/^\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5}(@[a-z0-9]{1,5})?$/)
+    )
+
+    chaiProperty(
+      'size 7',
+      arbitrary.relativeV5ApiUrl({ size: 7 }),
+      id => expect(id).to.match(/^\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{6}(@[a-z0-9]{1,5})?$/)
+    )
+
+  })
+
+
+  //---------------------------------------------------------------------------
+
+
+  describe('absoluteV5ApiUrl', function () {
+
+    chaiProperty(
+      'defaults',
+      arbitrary.absoluteV5ApiUrl(),
+      id => {
+        expect(() => new URL(id)).to.not.throw()
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+      }
+    )
+
+    chaiProperty(
+      'virtual never',
+      arbitrary.absoluteV5ApiUrl({ virtual: arbitrary.NEVER }),
+      id => {
+        expect(() => new URL(id)).to.not.throw()
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}$/)
+      }
+    )
+
+    chaiProperty(
+      'virtual always',
+      arbitrary.absoluteV5ApiUrl({ virtual: arbitrary.ALWAYS }),
+      id => {
+        expect(() => new URL(id)).to.not.throw()
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}@[a-z0-9]{1,5}$/)
+      }
+    )
+
+    chaiProperty(
+      'virtual sometimes',
+      arbitrary.absoluteV5ApiUrl({ virtual: arbitrary.SOMETIMES }),
+      id => {
+        expect(() => new URL(id)).to.not.throw()
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+      }
+    )
+
+    chaiProperty(
+      'size 6',
+      arbitrary.absoluteV5ApiUrl({ size: 6 }),
+      id => {
+        expect(() => new URL(id)).to.not.throw()
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5}(@[a-z0-9]{1,5})?$/)
+      }
+    )
+
+    chaiProperty(
+      'size 7',
+      arbitrary.absoluteV5ApiUrl({ size: 7 }),
+      id => {
+        expect(() => new URL(id)).to.not.throw()
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{6}(@[a-z0-9]{1,5})?$/)
+      }
+    )
+
+    chaiProperty(
+      'explicit api host',
+      arbitrary.absoluteV5ApiUrl({ sierraApiHost: 'some.library' }),
+      id => {
+        expect(() => new URL(id)).to.not.throw()
+        expect(id).to.match(/^https:\/\/some\.library\/[-/%._~!$&'()*+,;=:@a-zA-Z0-9]+\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+      }
+    )
+
+    chaiProperty(
+      'explicit api path',
+      arbitrary.absoluteV5ApiUrl({ sierraApiPath: '/test/sierra-api-beta/' }),
+      id => {
+        expect(() => new URL(id)).to.not.throw()
+        expect(id).to.match(/^https:\/\/[-%._~!$&'()*+,;=a-zA-Z0-9]+\/test\/sierra-api-beta\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+      }
+    )
+
+    chaiProperty(
+      'explicit host and api path',
+      arbitrary.absoluteV5ApiUrl({ sierraApiHost: 'some.library', sierraApiPath: '/test/sierra-api-beta/' }),
+      id => {
+        expect(() => new URL(id)).to.not.throw()
+        expect(id).to.match(/^https:\/\/some\.library\/test\/sierra-api-beta\/v5\/(authorities|bibs|invoices|items|orders|patrons)\/[1-9]\d{5,6}(@[a-z0-9]{1,5})?$/)
+      }
+    )
+
+  })
+
 })

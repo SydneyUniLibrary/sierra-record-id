@@ -1,0 +1,43 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= RelativeV5ApiUrl
+
+
+
+
+== Overview
+
+`class RelativeV5ApiUrl extends link:relative-v4-api-url.asciidoc[RelativeV4ApiUrl]`
+
+.Examples of relative v4 API URL strings
+----
+/v5/authorities/1316635
+/v5/bibs/526894
+/v5/bibs/3434098
+/v5/bibs/551912@mdill
+/v5/bibs/1792259@9woll
+/v5/invoices/1044142
+/v5/items/118287
+/v5/items/2385255
+/v5/items/537251@nrill
+/v5/items/5532493@9umel
+/v5/orders/314855
+/v5/orders/1321154
+/v5/patrons/210978
+/v5/patrons/1351172
+/v5/patrons/352099@9unew
+/v5/patrons/1024815@9umel
+----
+
+Version 5 of the Sierra API introduced neither new record types nor changes to the ids of existing types,
+except the ```/v4/``` becomes ```/v5/```.

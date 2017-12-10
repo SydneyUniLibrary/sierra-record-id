@@ -311,7 +311,9 @@ The previous paragraphs notwithstanding, if the key for a 6 digit record number 
 
 . If the id starts with `.`, then it is a record key and `RecordId.detect` calls `detectRecordKeyStrength`.
 . If the id starts with `https://` and contains `/v4/`, then it is an absolute v4 API URL.
+. If the id starts with `https://` and contains `/v5/`, then it is an absolute v5 API URL.
 . If the id starts with `/v4/`, then it is a relative v4 API URL.
+. If the id starts with `/v5/`, then it is a relative v5 API URL.
 . If the id starts with a letter, then it is a record key and `RecordId.detect` calls `detectRecordKeyStrength`.
 . If the id is a string 12 or more digits, then it is a database id.
 . If the id starts with a digit, then it is a record number.

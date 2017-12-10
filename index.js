@@ -26,6 +26,8 @@ module.exports = {
   ...require('./lib/database-id'),
   ...require('./lib/relative-v4-api-url'),
   ...require('./lib/absolute-v4-api-url'),
+  ...require('./lib/relative-v5-api-url'),
+  ...require('./lib/absolute-v5-api-url'),
 }
 
 

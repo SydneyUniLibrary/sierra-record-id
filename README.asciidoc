@@ -58,6 +58,14 @@ below. It is also the base class for `sierra-record-id`.
 | `\https://sierra.library.edu/iii/sierra-api/v4/items/3696836`
 | `\https://sierra.library.edu/iii/sierra-api/v4/items/587634@abcde`
 
+| link:docs/relative-v5-api-url.asciidoc[Relative v5 API URL]
+| `/v5/items/3696836`
+| `/v5/items/587634@abcde`
+
+| link:docs/absolute-v5-api-url.asciidoc[Absolute v5 API URL]
+| `\https://sierra.library.edu/iii/sierra-api/v5/items/3696836`
+| `\https://sierra.library.edu/iii/sierra-api/v5/items/587634@abcde`
+
 |===
 
 A record key has a record type character, which a record number does not have.
@@ -65,6 +73,9 @@ A record key has a record type character, which a record number does not have.
 A strong record key has a check digit, which a weak record key does not have.
 
 The Sierra API uses the term record id to generally mean record number. But sometimes it means an absolute API URL.
+
+NOTE: Version 5 of the Sierra API did not introduce any changes to record ids. Any reference to v4 absolute or relative
+      API URLs also applies to v5 absolute and relative API URLs.
 
 
 

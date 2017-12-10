@@ -25,7 +25,8 @@ const jsv = require('jsverify')
 const sinon = require('sinon')
 
 const {
-  AbsoluteV4ApiUrl, DatabaseId, RecordId, RecordNumber, RelativeV4ApiUrl, StrongRecordKey, WeakRecordKey
+  AbsoluteV4ApiUrl, AbsoluteV5ApiUrl, DatabaseId, RecordId, RecordNumber,
+  RelativeV4ApiUrl, RelativeV5ApiUrl, StrongRecordKey, WeakRecordKey
 } = require('..')
 
 const { arbitrary, chaiProperty } = require('../test-support')
@@ -385,6 +386,51 @@ describe('AbsoluteV4ApiUrl', function () {
       ( id ) => {
         const absoluteV4ApiUrl = new AbsoluteV4ApiUrl(id)
         expect(absoluteV4ApiUrl.convertTo(AbsoluteV4ApiUrl)).to.equal(absoluteV4ApiUrl)
+      }
+    )
+
+    chaiProperty(
+      'to relative v5 api url',
+      arbitrary.absoluteV4ApiUrl({ apiCompatibleOnly: true }),
+      ( id ) => {
+        const absoluteV4ApiUrl = new AbsoluteV4ApiUrl(id)
+        const relativeV5ApiUrl = absoluteV4ApiUrl.convertTo(RelativeV5ApiUrl)
+        expect(relativeV5ApiUrl).to.be.a('RelativeV5ApiUrl')
+        expect(relativeV5ApiUrl.recordTypeCode).to.equal(absoluteV4ApiUrl.recordTypeCode)
+        expect(relativeV5ApiUrl.recNum).to.equal(absoluteV4ApiUrl.recNum)
+        expect(relativeV5ApiUrl.campusCode).to.equal(absoluteV4ApiUrl.campusCode)
+      }
+    )
+
+    chaiProperty(
+      'to absolute v5 api url, with no api host and path given',
+      arbitrary.absoluteV4ApiUrl({ apiCompatibleOnly: true }),
+      ( id ) => {
+        const absoluteV4ApiUrl = new AbsoluteV4ApiUrl(id)
+        const absoluteV5ApiUrl = absoluteV4ApiUrl.convertTo(AbsoluteV5ApiUrl)
+        expect(absoluteV5ApiUrl).to.be.a('AbsoluteV5ApiUrl')
+        expect(absoluteV5ApiUrl.apiHost).to.equal(absoluteV4ApiUrl.apiHost)
+        expect(absoluteV5ApiUrl.apiPath).to.equal(absoluteV4ApiUrl.apiPath)
+        expect(absoluteV5ApiUrl.recordTypeCode).to.equal(absoluteV4ApiUrl.recordTypeCode)
+        expect(absoluteV5ApiUrl.recNum).to.equal(absoluteV4ApiUrl.recNum)
+        expect(absoluteV5ApiUrl.campusCode).to.equal(absoluteV4ApiUrl.campusCode)
+      }
+    )
+
+    chaiProperty(
+      'to absolute v5 api url, with explicit api host and path',
+      arbitrary.absoluteV4ApiUrl({ apiCompatibleOnly: true }),
+      arbitrary.API_HOST,
+      arbitrary.API_PATH,
+      ( id, apiHost, apiPath ) => {
+        const absoluteV4ApiUrl = new AbsoluteV4ApiUrl(id)
+        const absoluteV5ApiUrl = absoluteV4ApiUrl.convertTo(AbsoluteV5ApiUrl, { apiHost, apiPath })
+        expect(absoluteV5ApiUrl).to.be.a('AbsoluteV5ApiUrl')
+        expect(absoluteV5ApiUrl.apiHost).to.equal(apiHost)
+        expect(absoluteV5ApiUrl.apiPath).to.equal(apiPath)
+        expect(absoluteV5ApiUrl.recordTypeCode).to.equal(absoluteV4ApiUrl.recordTypeCode)
+        expect(absoluteV5ApiUrl.recNum).to.equal(absoluteV4ApiUrl.recNum)
+        expect(absoluteV5ApiUrl.campusCode).to.equal(absoluteV4ApiUrl.campusCode)
       }
     )
 

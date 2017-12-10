@@ -1,0 +1,29 @@
+:toc:
+:toc-placement!:
+:toc-title!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+= AbsoluteV5ApiUrl
+
+
+
+
+== Overview
+
+`class AbsoluteV5ApiUrl extends link:absolute-v4-api-url.asciidoc[AbsoluteV4ApiUrl]`
+
+.Examples of absolute v5 API URL strings
+----
+https://sierra.library.edu/iii/sierra-api/v5/items/3696836
+https://sierra.library.edu/iii/sierra-api/v5/items/587634@abcde
+----
+
+Version 5 of the Sierra API introduced neither new record types nor changes to the ids of existing types,
+except the ```/v4/``` becomes ```/v5/```.

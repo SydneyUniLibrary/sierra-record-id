@@ -25,7 +25,8 @@ const jsv = require('jsverify')
 const sinon = require('sinon')
 
 const {
-  AbsoluteV4ApiUrl, DatabaseId, RecordId, RecordNumber, RelativeV4ApiUrl, StrongRecordKey, WeakRecordKey
+  AbsoluteV4ApiUrl, AbsoluteV5ApiUrl, DatabaseId, RecordId, RecordNumber,
+  RelativeV4ApiUrl, RelativeV5ApiUrl, StrongRecordKey, WeakRecordKey
 } = require('..')
 
 const { arbitrary, chaiProperty } = require('../test-support')
@@ -280,6 +281,63 @@ describe('DatabaseId', function () {
           expect(absoluteV4ApiUrl.recordTypeCode).to.equal(databaseId.recordTypeCode)
           expect(absoluteV4ApiUrl.recNum).to.equal(databaseId.recNum)
           expect(absoluteV4ApiUrl.campusCode).to.be.null
+        } finally {
+          sandbox.restore()
+        }
+      }
+    )
+
+    chaiProperty(
+      'to relative v5 api url',
+      arbitrary.databaseId({ virtual: NEVER, apiCompatibleOnly: true }),
+      ( id ) => {
+        const databseId = new DatabaseId(id)
+        const relativeV5ApiUrl = databseId.convertTo(RelativeV5ApiUrl)
+        expect(relativeV5ApiUrl).to.be.a('RelativeV5ApiUrl')
+        expect(relativeV5ApiUrl.recordTypeCode).to.equal(databseId.recordTypeCode)
+        expect(relativeV5ApiUrl.recNum).to.equal(databseId.recNum)
+        expect(relativeV5ApiUrl.campusCode).to.be.null
+      }
+    )
+
+    chaiProperty(
+      'to absolute v5 api url, with explicit api host and path',
+      arbitrary.databaseId({ virtual: NEVER, apiCompatibleOnly: true }),
+      arbitrary.API_HOST,
+      arbitrary.API_PATH,
+      ( id, apiHost, apiPath ) => {
+        const databaseId = new DatabaseId(id)
+        const absoluteV5ApiUrl = databaseId.convertTo(AbsoluteV5ApiUrl, { apiHost, apiPath })
+        expect(absoluteV5ApiUrl).to.be.a('AbsoluteV5ApiUrl')
+        expect(absoluteV5ApiUrl.apiHost).to.equal(apiHost)
+        expect(absoluteV5ApiUrl.apiPath).to.equal(apiPath)
+        expect(absoluteV5ApiUrl.recordTypeCode).to.equal(databaseId.recordTypeCode)
+        expect(absoluteV5ApiUrl.recNum).to.equal(databaseId.recNum)
+        expect(absoluteV5ApiUrl.campusCode).to.be.null
+      }
+    )
+
+    chaiProperty(
+      'to absolute v5 api url, with api host and path from process env',
+      arbitrary.databaseId({ virtual: NEVER, apiCompatibleOnly: true }),
+      arbitrary.API_HOST,
+      arbitrary.API_PATH,
+      ( id, apiHost, apiPath ) => {
+        let sandbox = sinon.createSandbox()
+        try {
+          sandbox.stub(process, 'env').value({
+            ...process.env,
+            'SIERRA_API_HOST': apiHost,
+            'SIERRA_API_PATH': apiPath
+          })
+          const databaseId = new DatabaseId(id)
+          const absoluteV5ApiUrl = databaseId.convertTo(AbsoluteV5ApiUrl)
+          expect(absoluteV5ApiUrl).to.be.a('AbsoluteV5ApiUrl')
+          expect(absoluteV5ApiUrl.apiHost).to.equal(apiHost)
+          expect(absoluteV5ApiUrl.apiPath).to.equal(apiPath)
+          expect(absoluteV5ApiUrl.recordTypeCode).to.equal(databaseId.recordTypeCode)
+          expect(absoluteV5ApiUrl.recNum).to.equal(databaseId.recNum)
+          expect(absoluteV5ApiUrl.campusCode).to.be.null
         } finally {
           sandbox.restore()
         }

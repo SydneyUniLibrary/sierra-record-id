@@ -24,7 +24,7 @@ const jsv = require('jsverify')
 
 const {
   RecordId, RecordNumber, WeakRecordKey, StrongRecordKey, DatabaseId,
-  RelativeV4ApiUrl, AbsoluteV4ApiUrl
+  RelativeV4ApiUrl, AbsoluteV4ApiUrl, RelativeV5ApiUrl, AbsoluteV5ApiUrl,
 } = require('..')
 
 const { arbitrary, chaiProperty } = require('../test-support')
@@ -66,9 +66,21 @@ describe('RecordId', function () {
     )
 
     chaiProperty(
+      'detects relative v5 api urls',
+      arbitrary.relativeV5ApiUrl(),
+      id => expect(RecordId.detect(id)).to.equal(RelativeV5ApiUrl)
+    )
+
+    chaiProperty(
       'detects absolute v4 api urls',
       arbitrary.absoluteV4ApiUrl(),
       id => expect(RecordId.detect(id)).to.equal(AbsoluteV4ApiUrl)
+    )
+
+    chaiProperty(
+      'detects absolute v5 api urls',
+      arbitrary.absoluteV5ApiUrl(),
+      id => expect(RecordId.detect(id)).to.equal(AbsoluteV5ApiUrl)
     )
 
     chaiProperty(
@@ -147,6 +159,18 @@ describe('RecordId', function () {
       'detects and parses absolute v4 api urls',
       arbitrary.absoluteV4ApiUrl(),
       id => expect(RecordId.fromString(id)).to.be.a('AbsoluteV4ApiUrl')
+    )
+
+    chaiProperty(
+      'detects and parses relative v5 api urls',
+      arbitrary.relativeV5ApiUrl(),
+      id => expect(RecordId.fromString(id)).to.be.a('RelativeV5ApiUrl')
+    )
+
+    chaiProperty(
+      'detects and parses absolute v5 api urls',
+      arbitrary.absoluteV5ApiUrl(),
+      id => expect(RecordId.fromString(id)).to.be.a('AbsoluteV5ApiUrl')
     )
 
     const invalidRecordIds = [
